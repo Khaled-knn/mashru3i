@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "660420985633",
+    "project_id": "mashrou3i-2bec0",
+    "storage_bucket": "mashrou3i-2bec0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:660420985633:android:367dbb8d182c29e44fb460",
+        "android_client_info": {
+          "package_name": "com.example.mashrou3i_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "660420985633-n4autab3rv6nuk3tvv6ov3nhmvrcpe3v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mashrou3i_app",
+            "certificate_hash": "f5cc5811a952793121095f24cee2c6c3d7a9aa6c"
+          }
+        },
+        {
+          "client_id": "660420985633-f6iv65al9lvnp059kpm8s91u7ejlua02.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUHcsJ1OsXFCl9Q5WrtHLLUVlUCdH2VFI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "660420985633-f6iv65al9lvnp059kpm8s91u7ejlua02.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "660420985633-6iu755tf0tqgqqahi089jd9hre0qtfu3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mashrou3iApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
