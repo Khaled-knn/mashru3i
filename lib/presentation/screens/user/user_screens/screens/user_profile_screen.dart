@@ -131,9 +131,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> with WidgetsBindi
         padding: const EdgeInsets.all(2),
         child: Row(
           children: [
-            const CircleAvatar(
-              radius: 30,
-              backgroundImage: AssetImage('assets/images/icon.jpg'),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  width: 1,
+                  color: Theme.of(context).primaryColor,
+
+                ),
+                shape: BoxShape.circle
+              ),
+              child: const CircleAvatar(
+                radius: 30,
+                backgroundImage: AssetImage('assets/images/icon-m.jpeg'),
+              ),
             ),
             const SizedBox(width: 16),
             Column(
@@ -153,14 +163,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> with WidgetsBindi
                     const SizedBox(width: 5,),
                     Icon(
                       Icons.verified_sharp,
-                      color: user!.isVerified ? Colors.green : Colors.red,
+                      color:Colors.green,
                       size: 18,
                     ),
-                    if(user.isVerified==false)
-                      TextButton(
-                        onPressed: (){},
-                        child: Text('${"verifyNow".tr()}' ,style: const TextStyle(color: Colors.red, fontSize: 13 , fontWeight: FontWeight.bold ,decoration: TextDecoration.underline , decorationColor: Colors.red,  ),),
-                      ),
                   ],
                 ),
                 Text(

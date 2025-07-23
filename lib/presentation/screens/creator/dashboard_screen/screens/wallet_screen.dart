@@ -120,7 +120,7 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           content: Text(
-            LocaleKeys.confirm_request_message.tr(args: [amount.toStringAsFixed(2)]),
+            '${LocaleKeys.confirm_request_message.tr()} ${_amountController.text}  tokens ?',
             textAlign: TextAlign.center,
           ),
           actionsAlignment: MainAxisAlignment.spaceAround,
@@ -152,7 +152,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Text(LocaleKeys.confirm.tr()),
+              child: Text(LocaleKeys.confirm.tr() , style: TextStyle(color: Colors.black),),
             ),
           ],
         );

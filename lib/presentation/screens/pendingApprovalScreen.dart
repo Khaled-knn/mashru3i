@@ -95,7 +95,7 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _manualRefresh,
         child: BlocListener<DashBoardCubit, DashBoardStates>(
@@ -122,25 +122,20 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
           children: [
             const AppLogo(),
             const SizedBox(height: 30),
-            _buildStatusIndicator(),
-            const SizedBox(height: 20),
             _buildThankYouMessage(),
-            const SizedBox(height: 10),
-            _buildNextCheckText(),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(child: _buildSubscriptionButton(context)),
-                const SizedBox(width: 10),
-                FloatingActionButton(
-                  onPressed: _manualRefresh,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: _isRefreshing
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Icon(Icons.refresh, color: Colors.black),
-                ),
-              ],
+
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20
+              ),
+              child: _buildSubscriptionButton(context),
             ),
+            const SizedBox(height: 10),
+            Center(child: _buildNextCheckText()),
+            const SizedBox(height: 60),
+            _buildThankYou(),
+
           ],
         ),
       ),
@@ -169,15 +164,50 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 5),
+        Text(
+          LocaleKeys.weReceived.tr(),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontSize: 16
+          ),
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 20),
         Text(
           LocaleKeys.pending.tr(),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.grey[600],
+            color: Colors.grey[900],
           ),
         ),
       ],
+    );
+  }
+  Widget _buildThankYou() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(
+        bottom: 20
+      ),
+      child: Column(
+        children: [
+          Text(
+            LocaleKeys.thankYou.tr(),
+            style: TextStyle(
+              fontSize: 18
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            LocaleKeys.weex.tr(),
+            style: TextStyle(
+                fontSize: 14
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -193,14 +223,23 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
   }
 
   Widget _buildSubscriptionButton(BuildContext context) {
-    return CustomButton(
-      color: Colors.black26,
-      onPressed: _handleSubscriptionButton,
-      text: 'Back',
-      icon: Icons.arrow_back_ios_rounded,
-      textColor: Theme.of(context).primaryColor,
-      radios: 8,
-      height: 55,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 1,
+          color: Colors.black
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: CustomButton(
+        color: Colors.white,
+        onPressed: _handleSubscriptionButton,
+        text: 'Back to sign in',
+        icon: Icons.arrow_back_ios_rounded,
+        textColor: Colors.black,
+        radios: 8,
+        height: 55,
+      ),
     );
   }
 

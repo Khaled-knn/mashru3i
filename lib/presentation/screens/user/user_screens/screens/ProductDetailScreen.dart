@@ -121,7 +121,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>  {
           if (state is UserItemsLoading) {
             return _buildShimmerLoading();
           } else if (state is UserItemsError) {
-            return _buildErrorState(state.message);
+
           } else if (state is UserItemsLoaded) {
             try {
               final item = state.items.firstWhere(
@@ -916,51 +916,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>  {
       ),
     );
   }
-  Widget _buildErrorState(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Colors.red[400],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'error_occurred'.tr(),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => context.read<UserItemsCubit>().fetchItemsByProfessionId(widget.itemId),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text('retry'.tr()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(

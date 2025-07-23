@@ -1,7 +1,10 @@
 class LocaleKeys {
   static const choose_title = 'choose_title';
   static const image_load_error = 'image load error';
-  static const thankYouSignUp = 'thank You SignUp';
+  static const thankYouSignUp = 'Thank You for Signing up!';
+  static const thankYou = 'Thank You for your patience';
+  static const weex= 'we\'re excited to see your talents on our platform!';
+  static const weReceived = 'we\'ve received your Creator application. ';
   static const statusCheckError = 'status Check Error';
   static const nextCheckIn = 'next Check In';
   static const seconds = 'seconds';

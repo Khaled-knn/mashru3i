@@ -301,7 +301,7 @@ class _CartScreenState extends State<CartScreen> {
                       children: [
                         Icon(Icons.location_city , size: 18, color: Colors.grey,),
                         const SizedBox(width: 8),
-                        Text(fullAddress, style: const TextStyle(fontSize: 14)),
+                        Expanded(child: Text(fullAddress, style: const TextStyle(fontSize: 14))),
                       ],
                     ),
                     const SizedBox(height: 12),

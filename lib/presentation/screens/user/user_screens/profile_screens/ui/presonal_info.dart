@@ -158,7 +158,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 if (_currentUser?.isVerified ?? false)
                   _buildVerifiedBanner(context),
                 if (!(_currentUser?.isVerified ?? false))
-                  _buildVerifyNowBanner(context),
+
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView(
@@ -295,38 +295,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
-  Widget _buildVerifyNowBanner(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Add verification logic here
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange[700], size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'verifyYourAccount'.tr(),
-              style: TextStyle(
-                color: Colors.orange[700],
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward, color: Colors.orange[700], size: 20),
-          ],
-        ),
-      ),
-    );
-  }
+  //
 
   Widget _buildSaveButton(BuildContext context) {
     return Padding(

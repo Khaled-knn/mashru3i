@@ -1,14 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mashrou3i/core/network/local/cach_helper.dart';
-import 'package:mashrou3i/core/theme/color.dart'; // تأكد من وجود textColor هنا
+import 'package:mashrou3i/core/theme/color.dart'; // Assuming textColor is defined here
 import 'package:mashrou3i/data/models/user_order_model.dart';
-import 'package:mashrou3i/presentation/screens/user/user_screens/screens/orders/user_order_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/helper/user_data_manager.dart';
-import '../../../../../core/theme/icons_broken.dart';
 import 'orders/user_order_cubit.dart';
 import 'orders/user_order_statrs.dart';
+import 'orders/whish_service.dart';
 
 class UserOrdersScreen extends StatefulWidget {
   const UserOrdersScreen({super.key});
@@ -23,7 +22,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
   @override
   void initState() {
     super.initState();
-     context.read<UserOrdersCubit>().fetchUserOrders();
+    context.read<UserOrdersCubit>().fetchUserOrders();
   }
 
   @override
@@ -31,7 +30,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: Text('My-Orders'.tr(), style: TextStyle(fontSize: 16)),
+        title: Text('My-Orders'.tr(), style: const TextStyle(fontSize: 16)),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50.0),
@@ -39,14 +38,11 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
         ),
       ),
       body: BlocConsumer<UserOrdersCubit, UserOrdersState>(
-        listener: (context, state) {
-          if (state is UserOrdersError) {
-          } else if (state is UserOrdersUpdating) {
-          } else if (state is UserOrdersLoaded) {
-          }
-        },
+        listener: (context, state) {},
         builder: (context, state) {
-          if (state is UserOrdersInitial || state is UserOrdersLoading || state is UserOrdersUpdating) {
+          if (state is UserOrdersInitial ||
+              state is UserOrdersLoading ||
+              state is UserOrdersUpdating) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is UserOrdersLoaded) {
             final filteredOrders = state.orders.where((order) {
@@ -80,7 +76,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                       _currentFilter == 'all'
                           ? "Place your first order!".tr()
                           : "No $_currentFilter orders.".tr(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         color: Colors.grey,
                       ),
@@ -147,7 +143,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: ChoiceChip(
-                label: Text(filter['label']! , style: TextStyle( fontSize:14 ),),
+                label: Text(filter['label']!, style: const TextStyle(fontSize: 14)),
                 selected: isSelected,
                 selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
                 onSelected: (selected) {
@@ -355,13 +351,16 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                 const SizedBox(height: 16),
                 _buildDetailRow('Order ID:'.tr(), '#${order.orderId}'),
                 _buildDetailRow('Status:'.tr(), order.status.toUpperCase(),
-                    valueColor: _getStatusColor(order.status), isValueBold: true),
+                    valueColor: _getStatusColor(order.status),
+                    isValueBold: true),
                 _buildDetailRow('Payment Status:'.tr(), order.paymentStatus.toUpperCase(),
-                    valueColor: order.paymentStatus.toLowerCase() == 'paid' ? Colors.green : Colors.orange),
+                    valueColor:
+                    order.paymentStatus.toLowerCase() == 'paid' ? Colors.green : Colors.orange),
                 _buildDetailRow('Order Date:'.tr(), _formatDate(order.createdAt)),
                 const Divider(height: 24),
                 Text('Order Items:'.tr(),
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
                 const SizedBox(height: 8),
                 ...order.orderItems.map((item) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -384,7 +383,10 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                           padding: const EdgeInsets.only(left: 16.0, top: 4.0),
                           child: Text(
                             'Note: ${item.specialRequest}',
-                            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey[600]),
                           ),
                         ),
                       if (item.extrasDetails != null && item.extrasDetails!.isNotEmpty)
@@ -404,7 +406,8 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                   ),
                 )),
                 const Divider(height: 24),
-                _buildDetailRow('Total Amount:'.tr(), '\$${order.totalAmount.toStringAsFixed(2)}', isBold: true),
+                _buildDetailRow('Total Amount:'.tr(), '\$${order.totalAmount.toStringAsFixed(2)}',
+                    isBold: true),
                 const SizedBox(height: 16),
                 _buildActionButtons(context, order),
               ],
@@ -454,7 +457,8 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, UserOrder order) {
-    if (order.status.toLowerCase() == 'accepted' && order.paymentStatus.toLowerCase() == 'unpaid') {
+    if (order.status.toLowerCase() == 'accepted' &&
+        order.paymentStatus.toLowerCase() == 'unpaid') {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -470,7 +474,8 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
           onPressed: () => _showPaymentOptionsDialog(context, order),
         ),
       );
-    } else if (order.status.toLowerCase() == 'completed' && order.paymentStatus.toLowerCase() == 'paid') {
+    } else if (order.status.toLowerCase() == 'completed' &&
+        order.paymentStatus.toLowerCase() == 'paid') {
       return Center(
         child: Text(
           'Order completed and paid!'.tr(),
@@ -490,17 +495,13 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
 
   void _showPaymentOptionsDialog(BuildContext context, UserOrder order) {
     if (order.creatorPaymentMethods.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No payment methods available for this creator.'.tr()),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
+      showMainSnackBar(context, SnackBar(
+        content: Text('No payment methods available for this creator.'.tr()),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ));
       return;
     }
 
@@ -519,13 +520,13 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.payment),
-                    SizedBox(width: 8,),
+                    const Icon(Icons.payment),
+                    const SizedBox(width: 8),
                     Text(
                       'Select Payment Method'.tr(),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15
+                        fontSize: 15,
                       ),
                     ),
                   ],
@@ -546,16 +547,12 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                     default:
                       imagePath = 'assets/images/cash.png';
                   }
-
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      border: Border.all(
-                        color: textColor,
-                        width: 1,
-                      ),
+                      border: Border.all(color: textColor, width: 1),
                     ),
                     child: ListTile(
                       leading: Image.asset(
@@ -567,26 +564,18 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
                       ),
                       title: Text(
                         method.method.toUpperCase().replaceAll('_', ' '),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      subtitle: method.accountInfo != null &&
-                          method.accountInfo!.isNotEmpty
+                      subtitle: method.accountInfo != null && method.accountInfo!.isNotEmpty
                           ? Text(
                         method.accountInfo!,
-                        style: TextStyle(
-                          color: Theme.of(context).hintColor,
-                        ),
+                        style: TextStyle(color: Theme.of(context).hintColor),
                       )
                           : null,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       onTap: () {
                         Navigator.pop(dialogContext);
-                        _confirmPaymentAction(context, order.orderId, method.method);
+                        _confirmPaymentAction(context, order.orderId, method.method, order: order);
                       },
                     ),
                   );
@@ -609,14 +598,24 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
       },
     );
   }
-  void _confirmPaymentAction(BuildContext context, int orderId, String paymentMethod) async {
 
+
+  void showMainSnackBar(BuildContext context, SnackBar snackBar) {
+    final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+    if (scaffoldMessenger != null && context.mounted) {
+      scaffoldMessenger.showSnackBar(snackBar);
+    }
+  }
+
+
+
+
+  void _confirmPaymentAction(
+      BuildContext context, int orderId, String paymentMethod, {UserOrder? order}) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Confirm Payment'.tr(), style: TextStyle(
-          fontSize: 14,
-        )),
+        title: Text('Confirm Payment'.tr(), style: const TextStyle(fontSize: 14)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,9 +625,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
             Chip(
               label: Text(
                 paymentMethod,
-                style: TextStyle(
-                  color: Colors.black,
-                ),
+                style: const TextStyle(color: Colors.black),
               ),
               backgroundColor: Theme.of(dialogContext).primaryColor,
             ),
@@ -644,74 +641,118 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(dialogContext).primaryColor,
             ),
-            child: Text('Confirm'.tr(), style: TextStyle(color: Colors.black),),
+            child: Text('Confirm'.tr(), style: const TextStyle(color: Colors.black)),
           ),
         ],
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted || confirmed != true) return;
 
-    if (confirmed != true) {
-      return;
-    }
-
+    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContextForLoading) => const Center(child: CircularProgressIndicator()),
+      useRootNavigator: true,
+      builder: (loadingCtx) => const Center(child: CircularProgressIndicator()),
     );
 
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+
+    // Whish payment
+    if (paymentMethod.toLowerCase() == 'wishmoney') {
+      try {
+        UserOrder? thisOrder = order;
+        if (thisOrder == null) {
+          final state = context.read<UserOrdersCubit>().state;
+          if (state is UserOrdersLoaded) {
+            thisOrder = state.orders.firstWhere(
+                  (o) => o.orderId == orderId,
+              orElse: () => throw Exception("Order not found"),
+            );
+          }
+        }
+        if (thisOrder == null) throw Exception("Order not found");
+
+        final url = await WhishService.generateWhishPaymentUrl(
+          amount: thisOrder.totalAmount,
+          currency: "USD",
+          invoice: "Order #$orderId",
+          externalId: orderId,
+          successUrl: "https://mashru3i.com/success",
+          failureUrl: "https://mashru3i.com/failure",
+        );
+
+        if (rootNavigator.canPop()) rootNavigator.pop(); // Dismiss loading
+        if (!mounted) return;
+
+        if (url != null && url.isNotEmpty) {
+          await launchUrl(
+            url.startsWith('http') ? Uri.parse(url) : Uri.parse('https://$url'),
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Whish returned empty URL'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (rootNavigator.canPop()) rootNavigator.pop(); // Dismiss loading
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Whish Payment Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Other payment methods
     try {
       await context.read<UserOrdersCubit>().confirmPayment(
         orderId: orderId,
         paymentMethod: paymentMethod,
       );
 
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      if (rootNavigator.canPop()) rootNavigator.pop(); // Dismiss loading
+      if (!mounted) return;
 
       final user = UserDataManager.getUserModel();
       user?.points++;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment confirmed successfully!'.tr(), style: TextStyle(color: Colors.black)),
-            backgroundColor: Theme.of(context).primaryColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment confirmed successfully!'.tr(), style: const TextStyle(color: Colors.black)),
+          backgroundColor: Theme.of(context).primaryColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-      }
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     } catch (e) {
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
-
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to confirm payment: ${e.toString()}'.tr()),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
+      if (rootNavigator.canPop()) rootNavigator.pop(); // Dismiss loading
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to confirm payment: ${e.toString()}'.tr()),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-      }
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     }
   }
-
-
 
 
   Color _getStatusColor(String status) {

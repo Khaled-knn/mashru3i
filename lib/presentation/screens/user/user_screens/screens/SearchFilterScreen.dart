@@ -72,7 +72,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
     _isOpenNow = widget.initialIsOpenNow;
     _selectedProfessionId = widget.initialProfessionId;
 
-    // لا نحمّل أي بيانات عند البدء، ننتظر إدخال البحث
     _hasSearched = widget.initialSearch?.isNotEmpty ?? false;
 
     if (_hasSearched) {
@@ -194,12 +193,23 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                     const Divider(),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<int?>(
+
                       decoration: InputDecoration(
                         labelText: 'select_profession'.tr(),
+                        labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black, width: 1),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black, width: 1),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
                       value: _selectedProfessionId,
                       items: _professions.map((prof) {
@@ -214,6 +224,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                         });
                       },
                     ),
+
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -269,25 +280,31 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                         _selectedProfessionId == 1 ||
                         _selectedProfessionId == 4)
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _performSearch();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 15
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _performSearch();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        child: Text(
-                          'apply_filters'.tr(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
+                          child: Text(
+                            'apply_filters'.tr(),
+                            style: const TextStyle(
+                              fontSize: 16,
+                            color: Colors.black,
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
                         ),
                       ),
@@ -500,7 +517,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                                         ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        '${item.price.toStringAsFixed(2)} ${'currency'.tr()}',
+                                        '${item.price.toStringAsFixed(2)}\$',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: textColor,

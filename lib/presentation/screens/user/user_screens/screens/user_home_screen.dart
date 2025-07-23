@@ -85,7 +85,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(LocaleKeys.whereHome.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 5),
+
                         Text(LocaleKeys.talentMeetsYourNeeds.tr(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1,),
                       ],
                     ),
@@ -96,7 +96,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                       height: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5),
-                        color: Theme.of(context).primaryColor,
+                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                        border: Border.all(
+                          width: 1,
+                          color: Theme.of(context).primaryColor
+                        )
                       ),
                       child: Row(
                         children: [
@@ -111,7 +115,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
               ),
             ),
             const SizedBox(height: 20),
-
             BlocBuilder<UserItemsCubit, UserItemsState>(
               builder: (context, state) {
                 print('UserHomeScreen: BlocBuilder received state: $state');
@@ -206,9 +209,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                 );
               },
             ),
-
-            const SizedBox(height: 10),
-            // ... (باقي الكود: Search bar, Cart icon, Categories GridView)
+            const SizedBox(height: 20),
             InkWell(
               onTap: () {
                 Navigator.push(
@@ -230,7 +231,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Colors.grey.withOpacity(0.1),
                       spreadRadius: 3,
                       blurRadius: 5,
                       offset: const Offset(0, 3),
@@ -264,7 +265,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
                 itemCount: categories.length,

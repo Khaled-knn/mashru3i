@@ -62,7 +62,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
               SnackBar(content: Text(state.message), backgroundColor: Colors.red),
             );
           } else if (state is CreatorOrderUpdating) {
-            // يمكن إظهار مؤشر تحميل صغير أو إخفاء الأزرار أثناء التحديث
           }
         },
         builder: (context, state) {
@@ -96,7 +95,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               labelColor: textColor,
               unselectedLabelColor: Colors.grey,
               tabs: [
-                Tab(text: '${LocaleKeys.pending.tr()} (${pendingOrders.length})'),
+                Tab(text: 'Pending'.tr()),
                 Tab(text: '${LocaleKeys.accepted.tr()} (${acceptedOrders.length})'),
                 Tab(text: '${LocaleKeys.completed.tr()} (${completedOrders.length})'),
               ],

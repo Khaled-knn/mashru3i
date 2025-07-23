@@ -24,7 +24,7 @@
   "confirm_password_required": "Confirm password is required",
   "sign_up": "Sign Up",
   "choose_profession": "Choose your profession",
-  "pending": "Your application as a Creator has been receive. Our team is currently reviewing your details, and we will notify you as soon as your account is approved or if any additional information is needed. We appreciate your patience and look forward to having you showcase your talents on our platform!",
+  "pending": "Our team is  reviewing your details, and we will let you know once your account is approved or if we need more information .",
   "home": "Home",
   "income": "Income",
   "notification": "Notification",
@@ -228,8 +228,6 @@
   "to": "To",
   "active": "Active",
   "inactive": "Inactive",
-
-
 
 
 
@@ -577,8 +575,6 @@
   "Payment confirmed successfully!": "Payment confirmed successfully!",
   "Failed to confirm payment: ": "Failed to confirm payment: ",
   "Place your first order!": "Place your first order!",
-
-
   "coins": "Coins",
   "request_tokens": "Request Tokens",
   "amount_in_usd": "Amount in USD",
@@ -587,7 +583,7 @@
   "amount_required": "Amount is required.",
   "enter_valid_positive_amount": "Please enter a valid positive amount.",
   "confirm_request": "Confirm Request",
-  "confirm_request_message": "Are you sure you want to request {args[0]} tokens?",
+  "confirm_request_message": "Are you sure you want to request ",
   "sending_request": "Sending request...",
   "your_current_balance": "Your Current Balance",
   "filter_options": "Filter Options",
@@ -601,7 +597,6 @@
   "any_duration": "Any Duration",
   "enter_search_term": "Enter a search term",
   "currency": "LBP",
-
   "favorite_creators": "Favorite Creators",
   "no_favorites_yet": "No favorites yet",
   "add_favorites_description": "Add creators to your favorites to see them here.",

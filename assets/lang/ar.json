@@ -571,8 +571,6 @@
   "Payment confirmed successfully!": "تم تأكيد الدفع بنجاح!",
   "Failed to confirm payment: ": "فشل تأكيد الدفع: ",
   "Place your first order!": "قم بطلبك الأول!",
-
-
   "coins": "توكنز",
   "request_tokens": "طلب توكنز",
   "amount_in_usd": "المبلغ بالدولار الأمريكي",
@@ -581,7 +579,7 @@
   "amount_required": "المبلغ مطلوب.",
   "enter_valid_positive_amount": "الرجاء إدخال مبلغ موجب وصحيح.",
   "confirm_request": "تأكيد الطلب",
-  "confirm_request_message": "هل أنت متأكد أنك تريد طلب {args[0]} توكنز؟",
+  "confirm_request_message": "هل أنت متأكد أنك تريد طلب ",
   "sending_request": "جاري إرسال الطلب...",
   "your_current_balance": "رصيدك الحالي",
   "filter_options": "خيارات التصفية",
@@ -597,4 +595,5 @@
   "favorite_creators": "المبدعون المفضلون",
   "no_favorites_yet": "لا توجد عناصر مفضلة بعد",
   "add_favorites_description": "أضف مبدعين إلى مفضلتك لتراهم هنا."
+
 }
