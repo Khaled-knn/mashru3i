@@ -1,15 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mashrou3i/core/network/local/cach_helper.dart'; // تأكد من المسار الصحيح
+import 'package:mashrou3i/core/network/local/cach_helper.dart';
 import 'package:mashrou3i/core/theme/color.dart';
+import 'package:mashrou3i/presentation/screens/creator/dashboard_screen/screens/wallet_screen.dart';
 import 'package:mashrou3i/presentation/widgets/compnents.dart';
+import 'package:share_plus/share_plus.dart';
+
+
 import '../../../../../core/theme/LocaleKeys.dart';
-import '../../../../../core/theme/icons_broken.dart'; // تأكد من المسار الصحيح
-import '../../../../../data/models/crator_order_model.dart'; // تأكد من المسار الصحيح
-import '../../order/order_cubit.dart'; // تأكد من المسار الصحيح
-import '../../order/order_states.dart'; // تأكد من المسار الصحيح
-import 'dart:convert';
+import '../../../../../core/theme/icons_broken.dart';
+import '../../../../../data/models/crator_order_model.dart';
+import '../../order/order_cubit.dart';
+import '../../order/order_states.dart';
+
+// ⬇️ مضافة: لجلب رصيد المحفظة وفتح شاشة الشحن
+import '../logic/dashboard_cibit.dart';
+import '../logic/dashboard_states.dart';
 
 enum TimeUnit { minutes, hours, days }
 
@@ -23,18 +30,24 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   final TextEditingController _deliveryTimeController = TextEditingController();
 
+  // النسبة المطلوبة من قيمة الطلب كرصيد في المحفظة
+  static const double _requiredPercent = 0.05; // 5%
+
   @override
   void initState() {
     super.initState();
     _fetchOrders();
+    // نجلب رصيد المحفظة أول ما تفتح الشاشة
+    context.read<DashBoardCubit>().getProfileData();
   }
 
   void _fetchOrders() {
     final token = CacheHelper.getData(key: 'token');
     if (token != null) {
       context.read<CreatorOrderCubit>().fetchCreatorOrders(token);
+      // مع كل ريفرش حدّث الرصيد
+      context.read<DashBoardCubit>().getProfileData();
     } else {
-      // Handle case where token is null (e.g., show error or redirect to login)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Authentication token not found. Please log in.'.tr())),
       );
@@ -47,6 +60,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
     super.dispose();
   }
 
+  // تنسيق سريع
+  String _fmt(num v) => v.toStringAsFixed(2);
+
+  // ⬇️ NEW: مشاركة معلومات الطلب المكتمل
+  void _shareOrderInfo(CreatorOrder order) {
+    final name = order.userFirstName?.trim().isNotEmpty == true ? order.userFirstName!.trim() : LocaleKeys.unknown.tr();
+    final phone = order.userPhoneNumber?.trim().isNotEmpty == true ? order.userPhoneNumber!.trim() : LocaleKeys.not_provided.tr();
+    final address = order.shippingAddress?.trim().isNotEmpty == true ? order.shippingAddress!.trim() : LocaleKeys.not_provided.tr();
+
+    final text = StringBuffer()
+      ..writeln('🧾 ${LocaleKeys.order.tr()} #${order.orderId}')
+      ..writeln('👤 ${LocaleKeys.customer.tr()}: $name')
+      ..writeln('📞 ${LocaleKeys.phone.tr()}: $phone')
+      ..writeln('📍 ${LocaleKeys.address.tr()}: $address');
+
+    Share.share(text.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,32 +86,43 @@ class _OrdersScreenState extends State<OrdersScreen> {
         title: const Text('My Orders', style: TextStyle(fontSize: 18)),
         leading: popButton(context),
       ),
-      body: BlocConsumer<CreatorOrderCubit, CreatorOrderState>(
-        listener: (context, state) {
-          if (state is CreatorOrderError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
-          } else if (state is CreatorOrderUpdating) {
-          }
-        },
-        builder: (context, state) {
-          if (state is CreatorOrderInitial || state is CreatorOrderLoading || state is CreatorOrderUpdating) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is CreatorOrderError) {
-            return Center(child: Text(state.message));
-          } else if (state is CreatorOrderLoaded) {
-            return _buildOrderTabs(context, state.orders);
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<CreatorOrderCubit, CreatorOrderState>(
+            listener: (context, state) {
+              if (state is CreatorOrderError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+                );
+              }
+            },
+          ),
+          BlocListener<DashBoardCubit, DashBoardStates>(
+            listener: (context, state) {},
+          ),
+        ],
+        child: BlocBuilder<CreatorOrderCubit, CreatorOrderState>(
+          builder: (context, state) {
+            if (state is CreatorOrderInitial ||
+                state is CreatorOrderLoading ||
+                state is CreatorOrderUpdating) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is CreatorOrderError) {
+              return Center(child: Text(state.message));
+            } else if (state is CreatorOrderLoaded) {
+              return _buildOrderTabs(context, state.orders);
+            } else {
+              return const Center(child: CircularProgressIndicator());
+            }
+          },
+        ),
       ),
     );
   }
+
   Widget _buildOrderTabs(BuildContext context, List<CreatorOrder> allOrders) {
-    final pendingOrders = allOrders.where((o) => o.status.toLowerCase() == 'pending').toList();
-    final acceptedOrders = allOrders.where((o) => o.status.toLowerCase() == 'accepted').toList();
+    final pendingOrders   = allOrders.where((o) => o.status.toLowerCase() == 'pending').toList();
+    final acceptedOrders  = allOrders.where((o) => o.status.toLowerCase() == 'accepted').toList();
     final completedOrders = allOrders.where((o) => o.status.toLowerCase() == 'completed').toList();
     final cancelledOrders = allOrders.where((o) => o.status.toLowerCase() == 'canceled').toList();
 
@@ -157,7 +199,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Text(LocaleKeys.canceled_orders.tr(), style: const TextStyle(fontSize: 15)),
             ],
           ),
-          content: Container(
+          content: SizedBox(
             width: double.maxFinite,
             child: orders.isEmpty
                 ? Center(child: Text(LocaleKeys.no_canceled_orders.tr()))
@@ -171,7 +213,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: ListTile(
                     title: Text('${LocaleKeys.order.tr()} #${order.orderId}'),
                     subtitle: Text('${LocaleKeys.total.tr()} \$${order.totalAmount.toStringAsFixed(2)}'),
-                    trailing: Text(order.status.toUpperCase(), style: const TextStyle(color: Colors.red)),
+                    trailing: const Text('CANCELED', style: TextStyle(color: Colors.red)),
                   ),
                 );
               },
@@ -220,7 +262,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-
   Widget _buildOrderCard(BuildContext context, CreatorOrder order) {
     return Card(
       color: Colors.white,
@@ -258,7 +299,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        if (order.status.toLowerCase() == 'accepted' || order.status.toLowerCase() == 'completed')
+                        if (order.status.toLowerCase() == 'accepted' ||
+                            order.status.toLowerCase() == 'completed')
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -304,6 +346,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Total
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -319,6 +362,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ],
                   ),
+                  // Date
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -359,7 +403,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               children: [
                 _buildBottomSheetHeader(context),
                 _buildOrderDetailsContent(context, order),
-                _buildActionButtons(context, order),
+                _buildActionButtons(context, order), // ⬅️ هان بيتغير حسب الحالة
               ],
             ),
           ),
@@ -390,9 +434,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildOrderDetailsContent(BuildContext context, CreatorOrder order) {
+    final tokens = context.read<DashBoardCubit>().creatorProfile?.tokens ?? 0.0;
+    final requiredTokens = (order.totalAmount * _requiredPercent);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // IDs + Status
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -421,25 +469,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
           ],
         ),
+
         const SizedBox(height: 16),
+        // Customer Info
         Text(
           LocaleKeys.customer_info.tr(),
           style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         const SizedBox(height: 8),
-
         _buildDetailRow(LocaleKeys.name.tr(), order.userFirstName ?? LocaleKeys.unknown.tr(), isName: true),
         _buildDetailRow(LocaleKeys.address.tr(), order.shippingAddress ?? LocaleKeys.not_provided.tr()),
 
-        if (order.status.toLowerCase() == 'completed' || order.status.toLowerCase() == 'completed')
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow(LocaleKeys.phone.tr(), order.userPhoneNumber ?? LocaleKeys.not_provided.tr()),
-              _buildDetailRow(LocaleKeys.payment_method.tr(), order.paymentMethod ?? LocaleKeys.not_provided.tr()),
-            ],
-          )
-        else
+        if (order.status.toLowerCase() == 'completed') ...[
+          _buildDetailRow(LocaleKeys.phone.tr(), order.userPhoneNumber ?? LocaleKeys.not_provided.tr()),
+          _buildDetailRow(LocaleKeys.payment_method.tr(), order.paymentMethod ?? LocaleKeys.not_provided.tr()),
+        ] else ...[
           Container(
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
@@ -448,8 +492,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
             child: _buildDetailRow(LocaleKeys.contact_info.tr(), LocaleKeys.available_upon_payment.tr(), isBold: true),
           ),
+        ],
 
         const SizedBox(height: 16),
+        // Items
         Text(
           LocaleKeys.order_items.tr(),
           style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
@@ -461,6 +507,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // name + line total
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -473,8 +520,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Text('\$${(item.pricePerItem * item.quantity).toStringAsFixed(2)}'),
                 ],
               ),
-
-              // Extras
+              // extras
               if (item.extrasDetails != null && item.extrasDetails!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 4.0),
@@ -496,8 +542,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                   ),
                 ),
-
-              // Special Request
+              // special request
               if (item.specialRequest != null && item.specialRequest!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 4.0),
@@ -531,12 +576,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
         const Divider(height: 24),
 
+        // Summary
         _buildDetailRow(LocaleKeys.subtotal.tr(), '\$${order.totalAmount.toStringAsFixed(2)}'),
         _buildDetailRow(LocaleKeys.total.tr(), '\$${order.totalAmount.toStringAsFixed(2)}', isBold: true),
-
         const SizedBox(height: 8),
-
-        _buildDetailRow(LocaleKeys.order_date.tr(), DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt)),
+        _buildDetailRow(
+          'Required wallet (5%)',
+          '${_fmt(requiredTokens)} ${LocaleKeys.coins.tr()}',
+          isBold: true,
+        ),
+        _buildDetailRow(
+          'Your wallet',
+          '${_fmt(tokens)} ${LocaleKeys.coins.tr()}',
+        ),
+        const SizedBox(height: 8),
+        _buildDetailRow(
+          LocaleKeys.order_date.tr(),
+          DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt),
+        ),
         const SizedBox(height: 16),
       ],
     );
@@ -548,17 +605,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
-          ),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              ),
+              style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
               overflow: TextOverflow.ellipsis,
               maxLines: isName ? 1 : null,
             ),
@@ -569,24 +621,75 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, CreatorOrder order) {
-    if (order.status.toLowerCase() == 'pending') {
+    final status = order.status.toLowerCase();
+
+    // زر المشاركة فقط لما الحالة completed
+    if (status == 'completed') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.share , color: Colors.black,),
+            label: Text('Share details'.tr() , style: TextStyle(color: Colors.black),),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => _shareOrderInfo(order),
+          ),
+        ),
+      );
+    }
+
+    // الحالة pending: نفس منطق القبول/الإلغاء
+    if (status == 'pending') {
+      final tokens = context.read<DashBoardCubit>().creatorProfile?.tokens ?? 0.0;
+      final requiredTokens = (order.totalAmount * _requiredPercent);
+      final canAccept = tokens >= requiredTokens;
+
       return Padding(
         padding: const EdgeInsets.only(top: 16),
         child: Column(
           children: [
+            if (!canAccept)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red),
+                ),
+                child: Text(
+                  'You need at least ${_fmt(requiredTokens)} ${LocaleKeys.coins.tr()} (5% of order total) to accept this order.',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.check_circle_outline, size: 20, color: Colors.black),
                 label: Text(LocaleKeys.accept_order.tr(), style: const TextStyle(color: Colors.black)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: textColor,
+                  backgroundColor: canAccept ? textColor : Colors.grey.shade400,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: () => _showDeliveryTimeDialog(context, order),
+                onPressed: () async {
+                  if (!canAccept) {
+                    _showTopUpDialog(context, requiredTokens: requiredTokens, currentTokens: tokens);
+                  } else {
+                    await context.read<DashBoardCubit>().getProfileData();
+                    final latestTokens = context.read<DashBoardCubit>().creatorProfile?.tokens ?? 0.0;
+                    if (latestTokens < requiredTokens) {
+                      _showTopUpDialog(context, requiredTokens: requiredTokens, currentTokens: latestTokens);
+                      return;
+                    }
+                    _showDeliveryTimeDialog(context, order);
+                  }
+                },
               ),
             ),
             const SizedBox(height: 8),
@@ -599,21 +702,46 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: () {
-                  _confirmCancellation(context, order);
-                },
+                onPressed: () => _confirmCancellation(context, order),
               ),
             ),
           ],
         ),
       );
-    } else {
-      return const SizedBox.shrink();
     }
+
+    // باقي الحالات
+    return const SizedBox.shrink();
+  }
+
+  void _showTopUpDialog(BuildContext context, {required double requiredTokens, required double currentTokens}) {
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Insufficient balance', style: Theme.of(dCtx).textTheme.titleMedium),
+        content: Text(
+          'You need ${_fmt(requiredTokens)} ${LocaleKeys.coins.tr()} (5% of order total) to accept this order.\n'
+              'Your current balance is ${_fmt(currentTokens)} ${LocaleKeys.coins.tr()}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: Text(LocaleKeys.cancel.tr(), style: const TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dCtx);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+            child: const Text('Top up now', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _confirmCancellation(BuildContext context, CreatorOrder order) {
@@ -626,9 +754,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           actions: <Widget>[
             TextButton(
               child: Text(LocaleKeys.no.tr(), style: TextStyle(color: textColor)),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
               child: Text(LocaleKeys.yes_cancel.tr(), style: const TextStyle(color: Colors.red)),
@@ -644,6 +770,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     deliveryTimeValue: null,
                     deliveryTimeUnit: null,
                   );
+                  _fetchOrders();
                 }
               },
             ),
@@ -695,31 +822,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ChoiceChip(
                             label: Text(LocaleKeys.minutes.tr()),
                             selected: _dialogSelectedTimeUnit == TimeUnit.minutes,
-                            onSelected: (selected) {
-                              setState(() {
-                                _dialogSelectedTimeUnit = TimeUnit.minutes;
-                              });
-                            },
+                            onSelected: (selected) => setState(() => _dialogSelectedTimeUnit = TimeUnit.minutes),
                           ),
                           ChoiceChip(
                             label: Text(LocaleKeys.hours.tr()),
                             selected: _dialogSelectedTimeUnit == TimeUnit.hours,
-                            onSelected: (selected) {
-                              setState(() {
-                                _dialogSelectedTimeUnit = TimeUnit.hours;
-                              });
-                            },
+                            onSelected: (selected) => setState(() => _dialogSelectedTimeUnit = TimeUnit.hours),
                           ),
                         ],
                       ),
                       ChoiceChip(
                         label: Text(LocaleKeys.days.tr()),
                         selected: _dialogSelectedTimeUnit == TimeUnit.days,
-                        onSelected: (selected) {
-                          setState(() {
-                            _dialogSelectedTimeUnit = TimeUnit.days;
-                          });
-                        },
+                        onSelected: (selected) => setState(() => _dialogSelectedTimeUnit = TimeUnit.days),
                       ),
                     ],
                   ),
@@ -735,29 +850,74 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ElevatedButton(
               onPressed: () async {
                 final value = double.tryParse(_deliveryTimeController.text);
-                if (value != null && value > 0) {
-                  final token = CacheHelper.getData(key: 'token');
-                  if (token != null) {
-                    Navigator.pop(dialogContext);
-                    Navigator.pop(context);
-                    await context.read<CreatorOrderCubit>().acceptOrCancelOrder(
-                      orderId: order.orderId,
-                      status: 'accepted',
-                      token: token,
-                      deliveryTimeValue: value,
-                      deliveryTimeUnit: _dialogSelectedTimeUnit.toString().split('.').last,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(LocaleKeys.order_accepted_successfully.tr()),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } else {
+                if (value == null || value <= 0) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(content: Text(LocaleKeys.enter_valid_delivery_time.tr())),
                   );
+                  return;
+                }
+
+                // تأكيد أخير على الرصيد قبل الطلب
+                final tokens = context.read<DashBoardCubit>().creatorProfile?.tokens ?? 0.0;
+                final requiredTokens = (order.totalAmount * _requiredPercent);
+                if (tokens < requiredTokens) {
+                  Navigator.pop(dialogContext); // close time dialog
+                  _showTopUpDialog(context, requiredTokens: requiredTokens, currentTokens: tokens);
+                  return;
+                }
+
+                final token = CacheHelper.getData(key: 'token');
+                if (token == null) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Authentication token not found. Please log in.'.tr())),
+                  );
+                  return;
+                }
+
+                // أغلق الديالوجات قبل العملية
+                Navigator.pop(dialogContext); // close time dialog
+                Navigator.pop(context);       // close bottom sheet
+
+                try {
+                  await context.read<CreatorOrderCubit>().acceptOrCancelOrder(
+                    orderId: order.orderId,
+                    status: 'accepted',
+                    token: token,
+                    deliveryTimeValue: value,
+                    deliveryTimeUnit: _dialogSelectedTimeUnit.toString().split('.').last,
+                  );
+
+                  // تحديث قائمة الطلبات ورصيد المحفظة بعد القبول
+                  _fetchOrders();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(LocaleKeys.order_accepted_successfully.tr()),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  final msg = e.toString().toLowerCase();
+                  if (msg.contains('insufficient tokens')) {
+                    // 403 من السيرفر: رصيد غير كافٍ
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Insufficient balance. You need ${_fmt(requiredTokens)} ${LocaleKeys.coins.tr()} (5% of order total).',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    _showTopUpDialog(context, requiredTokens: requiredTokens, currentTokens: tokens);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${LocaleKeys.failed_to_accept_order.tr()}: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text('Confirm', style: TextStyle(color: Colors.black)),

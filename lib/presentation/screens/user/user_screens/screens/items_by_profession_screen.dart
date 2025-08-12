@@ -163,14 +163,11 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
               Text(_error!),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () => _loadCreators(
-                  search: _currentSearchQuery,
-                  minRate: _currentMinRate,
-                  freeDelivery: _currentFreeDelivery,
-                  hasOffer: _currentHasOffer,
-                  isOpenNow: _currentIsOpenNow,
-                ),
-                child: Text('retry'.tr()),
+                onPressed: () {
+                  _loadCreators();
+                  context.read<CartCubit>().initializeCart();
+                },
+                child: Text('retry'.tr() , style: TextStyle(color: Colors.black),),
               ),
             ],
           ),
@@ -180,179 +177,184 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
 
     if (creators.isEmpty && !_isLoading) {
       return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.store_mall_directory, size: 50, color: Colors.grey),
-              const SizedBox(height: 20),
-              Text('no_creators_available'.tr()),
-              const SizedBox(height: 20),
-              CustomButton(
-                onPressed: (){
-                  context.pop();
-                },
-                text: 'Go Back',
-                width: 200,
-                textColor: Colors.black,
-                icon: Icons.arrow_back_ios_new,
-              ),
-            ],
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.store_mall_directory, size: 50, color: Colors.grey),
+                const SizedBox(height: 20),
+                Text('no_creators_available'.tr()),
+                const SizedBox(height: 20),
+                CustomButton(
+                  onPressed: (){
+                    context.pop();
+                  },
+                  text: 'Go Back',
+                  width: 200,
+                  textColor: Colors.black,
+                  icon: Icons.arrow_back_ios_new,
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 25),
-            Row(
-              children: [
-                popButton(context),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: InkWell(
-                              onTap: _navigateToSearchFilterScreen,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    IconBroken.Search,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty
-                                          ? _currentSearchQuery!
-                                          : 'search_in_category'.tr(args: [widget.title]),
-                                      style: TextStyle(
-                                        color: _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty
-                                            ? Colors.black
-                                            : Colors.grey,
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  popButton(context),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: InkWell(
+                                onTap: _navigateToSearchFilterScreen,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      IconBroken.Search,
+                                      color: Colors.grey[600],
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty
+                                            ? _currentSearchQuery!
+                                            : '${'search_in_category'.tr()} ${widget.title}',
+                                        style: TextStyle(
+                                          color: _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty
+                                              ? Colors.black
+                                              : Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: const BorderRadiusDirectional.only(
-                              topEnd: Radius.circular(8),
-                              bottomEnd: Radius.circular(8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: const BorderRadiusDirectional.only(
+                                topEnd: Radius.circular(8),
+                                bottomEnd: Radius.circular(8),
+                              ),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(IconBroken.Filter, color: Colors.black),
+                              onPressed: _navigateToSearchFilterScreen,
                             ),
                           ),
-                          child: IconButton(
-                            icon: const Icon(IconBroken.Filter, color: Colors.black),
-                            onPressed: _navigateToSearchFilterScreen,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                  child: IconButton(
-                      onPressed: (){
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>  FavoriteCreatorsScreen(),
-                          ),
-                        );
-                      },
-                      icon: Icon(Icons.favorite , color: textColor,)),
-                )
-              ],
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _loadCreators(
-                    search: _currentSearchQuery,
-                    minRate: _currentMinRate,
-                    freeDelivery: _currentFreeDelivery,
-                    hasOffer: _currentHasOffer,
-                    isOpenNow: _currentIsOpenNow,
-                  );
-                },
-                child: ListView.separated(
-                  itemCount: creators.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 20),
-                  itemBuilder: (context, index) {
-                    final creator = creators[index];
-                    final now = DateTime.now();
-                    final currentDay = _getCurrentDay();
-                    final currentTime = TimeOfDay.fromDateTime(now);
-                    bool isAvailable = false;
-                    for (final slot in creator.availability) {
-                      final openTime = _parseTime(slot.openAt);
-                      final closeTime = _parseTime(slot.closeAt);
-
-                      final nowInMinutes = currentTime.hour * 60 + currentTime.minute;
-                      final openInMinutes = openTime.hour * 60 + openTime.minute;
-                      final closeInMinutes = closeTime.hour * 60 + closeTime.minute;
-
-                      final isOvernight = closeInMinutes < openInMinutes;
-
-                      if (isOvernight) {
-                        if (nowInMinutes >= openInMinutes || nowInMinutes < closeInMinutes) {
-                          isAvailable = true;
-                          break;
-                        }
-                      } else {
-                        if (nowInMinutes >= openInMinutes && nowInMinutes < closeInMinutes) {
-                          isAvailable = true;
-                          break;
-                        }
-                      }
-                    }
-
-                    final activeOffers = creator.offers.where((offer) {
-                      final start = DateTime.parse(offer.start);
-                      final end = DateTime.parse(offer.end);
-                      return now.isAfter(start) && now.isBefore(end);
-                    }).toList();
-                    final hasFreeDelivery = activeOffers.any((offer) => offer.type == 'free_delivery');
-                    final hasAllOrdersDiscountOffer = activeOffers.any((offer) => offer.type == 'all_orders_discount');
-                    final hasFirstOrderDiscount = activeOffers.any((offer) => offer.type == 'first_order_discount');
-                    return _buildCreatorCard(
-                      context: context,
-                      creator: creator,
-                      isAvailable: isAvailable,
-                      activeOffers: activeOffers,
-                      hasFreeDelivery: hasFreeDelivery,
-                      hasAllOrdersDiscountOffer: hasAllOrdersDiscountOffer,
-                      hasFirstOrderDiscount: hasFirstOrderDiscount,
+                  const SizedBox(width: 10),
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                    child: IconButton(
+                        onPressed: (){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>  FavoriteCreatorsScreen(),
+                            ),
+                          );
+                        },
+                        icon: Icon(Icons.favorite , color: textColor,)),
+                  )
+                ],
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _loadCreators(
+                      search: _currentSearchQuery,
+                      minRate: _currentMinRate,
+                      freeDelivery: _currentFreeDelivery,
+                      hasOffer: _currentHasOffer,
+                      isOpenNow: _currentIsOpenNow,
                     );
                   },
+                  child: ListView.separated(
+                    itemCount: creators.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 20),
+                    itemBuilder: (context, index) {
+                      final creator = creators[index];
+                      final now = DateTime.now();
+                      final currentDay = _getCurrentDay();
+                      final currentTime = TimeOfDay.fromDateTime(now);
+                      bool isAvailable = false;
+                      for (final slot in creator.availability) {
+                        final openTime = _parseTime(slot.openAt);
+                        final closeTime = _parseTime(slot.closeAt);
+        
+                        final nowInMinutes = currentTime.hour * 60 + currentTime.minute;
+                        final openInMinutes = openTime.hour * 60 + openTime.minute;
+                        final closeInMinutes = closeTime.hour * 60 + closeTime.minute;
+        
+                        final isOvernight = closeInMinutes < openInMinutes;
+        
+                        if (isOvernight) {
+                          if (nowInMinutes >= openInMinutes || nowInMinutes < closeInMinutes) {
+                            isAvailable = true;
+                            break;
+                          }
+                        } else {
+                          if (nowInMinutes >= openInMinutes && nowInMinutes < closeInMinutes) {
+                            isAvailable = true;
+                            break;
+                          }
+                        }
+                      }
+        
+                      final activeOffers = creator.offers.where((offer) {
+                        final start = DateTime.parse(offer.start);
+                        final end = DateTime.parse(offer.end);
+                        return now.isAfter(start) && now.isBefore(end);
+                      }).toList();
+                      final hasFreeDelivery = activeOffers.any((offer) => offer.type == 'free_delivery');
+                      final hasAllOrdersDiscountOffer = activeOffers.any((offer) => offer.type == 'all_orders_discount');
+                      final hasFirstOrderDiscount = activeOffers.any((offer) => offer.type == 'first_order_discount');
+                      return _buildCreatorCard(
+                        context: context,
+                        creator: creator,
+                        isAvailable: isAvailable,
+                        activeOffers: activeOffers,
+                        hasFreeDelivery: hasFreeDelivery,
+                        hasAllOrdersDiscountOffer: hasAllOrdersDiscountOffer,
+                        hasFirstOrderDiscount: hasFirstOrderDiscount,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -397,7 +399,6 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
         ),
         child: Stack(
           children: [
-
             if (hasAllOrdersDiscountOffer)
               Positioned(
                 top: 0,

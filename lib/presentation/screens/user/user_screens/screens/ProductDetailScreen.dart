@@ -111,29 +111,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>  {
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
-      body: BlocConsumer<UserItemsCubit, UserItemsState>(
-        listener: (context, state) {
-          if (state is UserItemsError) {
-            _showErrorSnackBar(context, state.message);
-          }
-        },
-        builder: (context, state) {
-          if (state is UserItemsLoading) {
-            return _buildShimmerLoading();
-          } else if (state is UserItemsError) {
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: BlocConsumer<UserItemsCubit, UserItemsState>(
+            listener: (context, state) {
+              if (state is UserItemsError) {
+                _showErrorSnackBar(context, state.message);
+              }
+            },
+            builder: (context, state) {
+              if (state is UserItemsLoading) {
+                return _buildShimmerLoading();
+              } else if (state is UserItemsError) {
 
-          } else if (state is UserItemsLoaded) {
-            try {
-              final item = state.items.firstWhere(
-                    (item) => item.id == widget.itemId,
-              );
-              return _buildProductContent(item);
-            } catch (e) {
+              } else if (state is UserItemsLoaded) {
+                try {
+                  final item = state.items.firstWhere(
+                        (item) => item.id == widget.itemId,
+                  );
+                  return _buildProductContent(item);
+                } catch (e) {
+                  return _buildEmptyState();
+                }
+              }
               return _buildEmptyState();
-            }
-          }
-          return _buildEmptyState();
-        },
+            },
+          ),
+        ),
       ),
       bottomNavigationBar: BlocBuilder<CartCubit, CartState>(
         builder: (context, cartState) {

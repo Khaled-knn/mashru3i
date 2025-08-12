@@ -18,7 +18,7 @@ class AddItemScreen extends StatelessWidget {
           if (state is ItemSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
                SnackBar(
-                content: Text('Item has been added successfully. 5 points have been deducted.' , style: TextStyle(color: Colors.black),),
+                content: Text('Item has been added successfully. 1 points have been deducted.' , style: TextStyle(color: Colors.black),),
                 backgroundColor: Theme.of(context).primaryColor,
               ),
             );

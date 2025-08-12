@@ -185,16 +185,7 @@ class _ItemsByCreatorIdScreenState extends State<ItemsByCreatorIdScreen> {
             ],
           ),
         ),
-        Expanded(
-          child: Column(
-            children: [
-              const Icon(Icons.monetization_on),
-              const SizedBox(height: 10),
-              const Text('Minimum'),
-              const Text('500,000 LBP', style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-        ),
+
       ],
     );
   }

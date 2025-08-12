@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/LocaleKeys.dart';
@@ -15,8 +16,13 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController(); // kept for compatibility if needed
   final _formKey = GlobalKey<FormState>();
+
+  // Controllers for converter
+  final TextEditingController _tokensController = TextEditingController(text: '');
+  double _convertedUsd = 0.0;
+  double _appliedRate = 1.0;
 
   @override
   void initState() {
@@ -27,134 +33,168 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _tokensController.dispose();
     super.dispose();
   }
 
-  void _showRequestTokensDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Cannot be dismissed by tapping outside
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            LocaleKeys.request_tokens.tr(),
-            style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Form(
-            key: _formKey,
-            child: TextFormField(
-              controller: _amountController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: LocaleKeys.amount_in_usd.tr(),
-                hintText: 'e.g., 50.0',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                prefixIcon: const Icon(Icons.attach_money),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return LocaleKeys.amount_required.tr(); // Error message
-                }
-                final amount = double.tryParse(value);
-                if (amount == null || amount <= 0) {
-                  return LocaleKeys.enter_valid_positive_amount.tr(); // Error message
-                }
-                return null;
-              },
-            ),
-          ),
-          actionsAlignment: MainAxisAlignment.spaceAround, // Better button distribution
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _amountController.clear();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(dialogContext).colorScheme.error, // Red for cancel
-              ),
-              child: Text(LocaleKeys.cancel.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) { // Validate input
-                  final double amount = double.parse(_amountController.text.trim());
-                  Navigator.of(dialogContext).pop(); // Close input dialog
-
-                  // Show confirmation dialog
-                  _showConfirmationDialog(context, amount);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(dialogContext).primaryColor, // Distinct color for primary button
-                foregroundColor: Colors.white, // Text color
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(LocaleKeys.send_request.tr() , style: TextStyle(color: Colors.black),),
-            ),
-          ],
-        );
-      },
+  // ====== Unified black decoration for all TextFields ======
+  InputDecoration _blackBorderDecoration({
+    required String label,
+    String? hint,
+    IconData? icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      labelStyle: const TextStyle(color: Colors.black),
+      hintStyle: const TextStyle(color: Colors.black),
+      prefixIcon: icon != null ? Icon(icon, color: Colors.black) : null,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black, width: 1),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black, width: 2),
+      ),
+      disabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black, width: 1),
+      ),
     );
   }
 
-  void _showConfirmationDialog(BuildContext context, double amount) {
+  // ====== PRICING LOGIC (tiers) ======
+  // 1   -> $1.00
+  // 50+ -> $0.97
+  // 500+ -> $0.90
+  // 1000+ -> $0.90
+  // 5000+ -> $0.85
+  double _unitPriceForTokens(double tokens) {
+    if (tokens >= 5000) return 0.85;
+    if (tokens >= 1000) return 0.90;
+    if (tokens >= 500)  return 0.90;
+    if (tokens >= 50)   return 0.97;
+    return 1.00;
+  }
+
+  double _round2(double v) => double.parse(v.toStringAsFixed(2));
+
+  void _recalcConverter() {
+    final t = double.tryParse(_tokensController.text.trim()) ?? 0.0;
+    final rate = _unitPriceForTokens(t);
+    setState(() {
+      _appliedRate = rate;
+      _convertedUsd = _round2(t * rate);
+    });
+  }
+
+  // ====== REQUEST TOKENS DIALOG (enter tokens -> auto USD) ======
+  void _showRequestTokensDialog(BuildContext context) {
+    final tokensInputCtrl = TextEditingController();
+    double localUsd = 0.0;
+    double localRate = 1.0;
+
+    void localRecalc(void Function(void Function()) setStateDialog) {
+      final t = double.tryParse(tokensInputCtrl.text.trim()) ?? 0.0;
+      final r = _unitPriceForTokens(t);
+      setStateDialog(() {
+        localRate = r;
+        localUsd = _round2(t * r);
+      });
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext confirmDialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            LocaleKeys.confirm_request.tr(),
-            style: Theme.of(confirmDialogContext).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            '${LocaleKeys.confirm_request_message.tr()} ${_amountController.text}  tokens ?',
-            textAlign: TextAlign.center,
-          ),
-          actionsAlignment: MainAxisAlignment.spaceAround,
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(confirmDialogContext).pop();
-                _amountController.clear();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(confirmDialogContext).colorScheme.error,
-              ),
-              child: Text(LocaleKeys.cancel.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(confirmDialogContext).pop(); // Close confirmation dialog
-                FocusScope.of(context).unfocus(); // Hide keyboard
-
-                // Send the actual request via Cubit
-                context.read<DashBoardCubit>().requestTokens(amount);
-                _amountController.clear(); // Clear the field after sending
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(confirmDialogContext).primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text(
+                LocaleKeys.request_tokens.tr(),
+                style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              child: Text(LocaleKeys.confirm.tr() , style: TextStyle(color: Colors.black),),
-            ),
-          ],
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Tokens input (BLACK theme)
+                    TextFormField(
+                      controller: tokensInputCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _blackBorderDecoration(
+                        label: LocaleKeys.coins.tr(),
+                        hint: 'e.g., 50',
+                        icon: Icons.monetization_on_outlined,
+                      ),
+                      onChanged: (_) => localRecalc(setStateDialog),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return LocaleKeys.amount_required.tr();
+                        }
+                        final t = double.tryParse(value);
+                        if (t == null || t <= 0) {
+                          return LocaleKeys.enter_valid_positive_amount.tr();
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    // USD readonly (BLACK theme)
+                    TextFormField(
+                      enabled: false,
+                      decoration: _blackBorderDecoration(
+                        label: 'USD',
+                        icon: Icons.attach_money,
+                      ),
+                      controller: TextEditingController(text: localUsd.toStringAsFixed(2)),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Rate: \$${localRate.toStringAsFixed(2)} / token'
+                            '${localRate < 1 ? '  (${((1 - localRate) * 100).toStringAsFixed(0)}% off)' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.spaceAround,
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  child: Text(LocaleKeys.cancel.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      // نرسل الطلب بقيمة USD المحسوبة
+                      Navigator.of(dialogContext).pop();
+                      FocusScope.of(context).unfocus();
+                      context.read<DashBoardCubit>().requestTokens(localUsd);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(dialogContext).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text(LocaleKeys.send_request.tr(), style: const TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -168,10 +208,14 @@ class _WalletScreenState extends State<WalletScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
-                children: [
-                  const CircularProgressIndicator(color: Colors.white),
-                  const SizedBox(width: 15),
-                  Text(LocaleKeys.sending_request.tr(), style: TextStyle(color: Colors.black)),
+                children: const [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 12),
+                  // ننخلي النص أسود
                 ],
               ),
               duration: const Duration(minutes: 1),
@@ -180,22 +224,32 @@ class _WalletScreenState extends State<WalletScreen> {
               backgroundColor: Theme.of(context).primaryColor,
             ),
           );
-        } else if (state is RequestTokensSuccessState) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Hide loading SnackBar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message , style: TextStyle(color: Colors.black),),
-              backgroundColor: Theme.of(context).primaryColor, // Green for success
+              content: Text(LocaleKeys.sending_request.tr(), style: const TextStyle(color: Colors.black)),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
+          );
+        } else if (state is RequestTokensSuccessState) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message, style: const TextStyle(color: Colors.black)),
+              backgroundColor: Theme.of(context).primaryColor,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           );
+          // حدّث البروفايل بعد الطلب
+          context.read<DashBoardCubit>().getProfileData();
         } else if (state is RequestTokensErrorState) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Hide loading SnackBar
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error),
-              backgroundColor: Colors.red, // Red for error
+              backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -204,6 +258,7 @@ class _WalletScreenState extends State<WalletScreen> {
       },
       builder: (context, state) {
         final cubit = context.read<DashBoardCubit>();
+
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -212,7 +267,7 @@ class _WalletScreenState extends State<WalletScreen> {
             title: Text(LocaleKeys.wallet.tr()),
           ),
           body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Increased padding
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Column(
               children: [
                 // Balance Card
@@ -221,7 +276,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
-                    gradient: LinearGradient( // Beautiful gradient
+                    gradient: LinearGradient(
                       colors: [Theme.of(context).primaryColor, Colors.white],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -263,21 +318,111 @@ class _WalletScreenState extends State<WalletScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
+
+                const SizedBox(height: 20),
+
+                // ====== Converter Card (Tokens -> USD) ======
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Convert Tokens to USD', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black)),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _tokensController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: _blackBorderDecoration(
+                                label: LocaleKeys.coins.tr(),
+                                hint: 'e.g., 50',
+                                icon: Icons.monetization_on_outlined,
+                              ),
+                              onChanged: (_) => _recalcConverter(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 140,
+                            child: TextField(
+                              enabled: false,
+                              decoration: _blackBorderDecoration(
+                                label: 'USD',
+                                icon: Icons.attach_money,
+                              ),
+                              controller: TextEditingController(
+                                text: _convertedUsd.toStringAsFixed(2),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [50, 100, 500, 1000, 5000].map((v) {
+                          return ActionChip(
+                            label: Text(
+                              '$v',
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                            onPressed: () {
+                              _tokensController.text = '$v';
+                              _recalcConverter();
+                            },
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.black),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rate: \$${_appliedRate.toStringAsFixed(2)} / token'
+                            '${_appliedRate < 1 ? '  (${((1 - _appliedRate) * 100).toStringAsFixed(0)}% off)' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Request tokens using dialog (now token-based input)
                 ElevatedButton.icon(
                   onPressed: () => _showRequestTokensDialog(context),
-                  icon: const Icon(Icons.add_circle_outline , color: Colors.black,),
-                  label: Text(LocaleKeys.request_tokens.tr() , style: TextStyle(color: Colors.black),),
+                  icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                  label: Text(LocaleKeys.request_tokens.tr(), style: const TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 55),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 5, // Button shadow
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 5,
                   ),
                 ),
+                SizedBox(
+                  height: 20,
+                ),
+                buildPaymentMethods(context),
+
+
+
+
               ],
             ),
           ),
@@ -285,4 +430,68 @@ class _WalletScreenState extends State<WalletScreen> {
       },
     );
   }
+
+
+
+  Widget buildPaymentMethods(BuildContext context) {
+    final paymentMethods = [
+      {
+        "name": "Pay W2W",
+        "number": "+961 70 044 990",
+        "image": "assets/images/whish.png",
+      },
+      {
+        "name": "Pay OMT",
+        "number": "+961 78 874 707",
+        "image": "assets/images/omt.png",
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...paymentMethods.map((method) {
+          return Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 3,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              leading: Image.asset(
+                method["image"] as String,
+                width: 40,
+                height: 40,
+                fit: BoxFit.contain,
+              ),
+              title: Text(
+                method["name"] as String,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                method["number"] as String,
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.copy, color: Colors.grey),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: method["number"] as String));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      content: Text("${method["name"]} number copied!" , style: TextStyle(color: Colors.black),),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+
 }

@@ -41,7 +41,7 @@
   "payments_gateway": "Payments Gateway",
   "recent_items": "Recent Items",
   "add_new_item": "Add New Item",
-  "deduce_5_points": "Deduce 5 points",
+  "deduce_5_points": "Deduce 1 points",
   "choose_pictures": "Choose pictures",
   "name_of_food": "Name of food",
   "name_of_sweet": "Name of sweet",
@@ -597,7 +597,7 @@
   "any_duration": "Any Duration",
   "enter_search_term": "Enter a search term",
   "currency": "LBP",
-  "favorite_creators": "Favorite Creators",
+  "favorite_creators": "Favorite Store",
   "no_favorites_yet": "No favorites yet",
   "add_favorites_description": "Add creators to your favorites to see them here.",
   "Delivery": "Delivery"

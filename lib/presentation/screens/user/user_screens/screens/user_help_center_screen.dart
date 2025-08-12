@@ -108,111 +108,117 @@ class _UserHelpCenterScreenState extends State<UserHelpCenterScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Text(
-                'help_center_title'.tr(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-              ),
-              const SizedBox(height: 10),
-              Image.asset('assets/images/help.gif', width: 300),
-              const SizedBox(height: 10),
-              Text(
-                'help_center_subtitle'.tr(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'help_center_description'.tr(),
-                  style: const TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 20),
-              CustomFormInput(
-                controller: _messageController,
-                label: 'write_here_label'.tr(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Message cannot be empty'.tr();
-                  }
-                  return null;
-                },
-                borderRadius: 10,
-                maxLines: 3,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-              ),
-              const SizedBox(height: 20),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
-                    textAlign: TextAlign.center,
+    return Scaffold(
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Text(
+                    'help_center_title'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
                   ),
-                ),
-              if (_showSuccess)
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 10),
+                  Image.asset('assets/images/help.gif', width: 300),
+                  const SizedBox(height: 10),
+                  Text(
+                    'help_center_subtitle'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'help_center_description'.tr(),
+                      style: const TextStyle(fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  CustomFormInput(
+                    controller: _messageController,
+                    label: 'write_here_label'.tr(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Message cannot be empty'.tr();
+                      }
+                      return null;
+                    },
+                    borderRadius: 10,
+                    maxLines: 3,
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  ),
+                  const SizedBox(height: 20),
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
+                        textAlign: TextAlign.center,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.check, color: Colors.black),
-                          const SizedBox(width: 8),
-                          Text(
-                            'successfully_sent_message'.tr(),
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                            ),
+                    ),
+                  if (_showSuccess)
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check, color: Colors.black),
+                              const SizedBox(width: 8),
+                              Text(
+                                'successfully_sent_message'.tr(),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: _isLoading ? 48 : 150,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _sendData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        padding: _isLoading
+                            ? const EdgeInsets.all(12)
+                            : const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(_isLoading ? 25 : 10),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      )
+                          : Text(
+                        'send_button'.tr(),
+                        style: const TextStyle(fontSize: 18, color: Colors.black),
                       ),
                     ),
                   ),
-                ),
-              const SizedBox(height: 20),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: _isLoading ? 48 : 150,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _sendData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    padding: _isLoading
-                        ? const EdgeInsets.all(12)
-                        : const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(_isLoading ? 25 : 10),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                  )
-                      : Text(
-                    'send_button'.tr(),
-                    style: const TextStyle(fontSize: 18, color: Colors.black),
-                  ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

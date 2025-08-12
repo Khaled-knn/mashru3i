@@ -27,7 +27,7 @@ class _ExtraItemsSectionState extends State<ExtraItemsSection> {
   @override
   void initState() {
     super.initState();
-    // تهيئة الـ controllers بالبيانات الأولية إذا كانت موجودة
+
     if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
       for (var itemData in widget.initialItems!) {
         _items.add({
@@ -36,10 +36,10 @@ class _ExtraItemsSectionState extends State<ExtraItemsSection> {
         });
       }
     } else {
-      // إذا لا يوجد بيانات أولية، نبدأ بعنصر واحد فارغ
+
       _addItem();
     }
-    _notifyParent(); // إبلاغ الـ parent بالقيم الأولية بعد التهيئة
+    _notifyParent();
   }
 
   @override

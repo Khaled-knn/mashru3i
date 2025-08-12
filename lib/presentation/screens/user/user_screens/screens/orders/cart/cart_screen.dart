@@ -761,7 +761,6 @@ class _CartScreenState extends State<CartScreen> {
   void _placeOrder(BuildContext context, List<CreatorPaymentMethodModel> creatorPaymentMethods) async {
     final cartCubit = context.read<CartCubit>();
 
-
     final addressState = context.read<UserAddressCubit>().state;
     if (addressState is UserAddressLoaded) {
       final currentUserAddress = addressState.user;
@@ -771,7 +770,6 @@ class _CartScreenState extends State<CartScreen> {
         currentUserAddress.country,
       );
     }
-
 
     if (_selectedAddress == null || _selectedAddress!.isEmpty) {
       await _showAddressErrorDialog(context);
@@ -946,24 +944,7 @@ class _CartScreenState extends State<CartScreen> {
                             SizedBox(height: 20),
                 
                             // Notes Section
-                            TextField(
-                              controller: notesController,
-                              decoration: InputDecoration(
-                                labelText: "additional notes".tr(),
-                                labelStyle: TextStyle(color: Colors.grey[600]),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: primaryColor),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
-                              ),
-                              maxLines: 2,
-                            ),
+
                           ],
                         ),
                       ),

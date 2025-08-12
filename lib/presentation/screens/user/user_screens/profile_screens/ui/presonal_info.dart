@@ -123,145 +123,150 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ],
       ),
       bottomNavigationBar: _isEditing ? _buildSaveButton(context) : null,
-      body: BlocListener<LoginCubit, LoginState>(
-        listener: (context, state) {
-          if (state is UpdateProfileLoadingState) {
-            // No SnackBar needed here, as the button itself will show loading
-          } else if (state is UpdateProfileSuccessState) {
-            _updateUIWithNewData(state.updatedUser);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message, style: TextStyle(color: Colors.black)),
-                backgroundColor: Theme.of(context).primaryColor,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } else if (state is UpdateProfileErrorState) {
-            setState(() {
-              _isLoading = false; // Set loading to false on error
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        },
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                if (_currentUser?.isVerified ?? false)
-                  _buildVerifiedBanner(context),
-                if (!(_currentUser?.isVerified ?? false))
-
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView(
-                    children: [
-                      Card(
-                        color: Colors.white,
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              _buildEditableInfoRow(
-                                context,
-                                icon: Icons.person_outline,
-                                label: 'firstName'.tr(),
-                                controller: _firstNameController,
-                                enabled: _isEditing,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'firstNameRequired'.tr();
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const Divider(height: 24, thickness: 0.5),
-                              _buildEditableInfoRow(
-                                context,
-                                icon: Icons.person_outline,
-                                label: 'lastName'.tr(),
-                                controller: _lastNameController,
-                                enabled: _isEditing,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'lastNameRequired'.tr();
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const Divider(height: 24, thickness: 0.5),
-                              _buildEditableInfoRow(
-                                context,
-                                icon: Icons.email_outlined,
-                                label: 'emailAddress'.tr(),
-                                controller: _emailController,
-                                enabled: false,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'emailRequired'.tr();
-                                  }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                      .hasMatch(value)) {
-                                    return 'invalidEmail'.tr();
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const Divider(height: 24, thickness: 0.5),
-                              _buildEditableInfoRow(
-                                context,
-                                icon: Icons.phone_android_outlined,
-                                label: 'phoneNumber'.tr(),
-                                controller: _phoneController,
-                                enabled: _isEditing,
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'phoneRequired'.tr();
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const Divider(height: 24, thickness: 0.5),
-                              _buildInfoRow(
-                                context,
-                                icon: Icons.star_outline,
-                                label: 'points'.tr(),
-                                value: '${_currentUser?.points ?? 0} ${'points'.tr()}',
-                                trailing: (_currentUser?.points ?? 0) > 0
-                                    ? TextButton(
-                                  onPressed: () {
-                                    // Navigate to points screen
-                                  },
-                                  child: Text(
-                                    'redeem'.tr(),
-                                    style: TextStyle(
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                )
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: BlocListener<LoginCubit, LoginState>(
+            listener: (context, state) {
+              if (state is UpdateProfileLoadingState) {
+                // No SnackBar needed here, as the button itself will show loading
+              } else if (state is UpdateProfileSuccessState) {
+                _updateUIWithNewData(state.updatedUser);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message, style: TextStyle(color: Colors.black)),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    behavior: SnackBarBehavior.floating,
                   ),
+                );
+              } else if (state is UpdateProfileErrorState) {
+                setState(() {
+                  _isLoading = false; // Set loading to false on error
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.error),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    if (_currentUser?.isVerified ?? false)
+                      _buildVerifiedBanner(context),
+                    if (!(_currentUser?.isVerified ?? false))
+          
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          Card(
+                            color: Colors.white,
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  _buildEditableInfoRow(
+                                    context,
+                                    icon: Icons.person_outline,
+                                    label: 'firstName'.tr(),
+                                    controller: _firstNameController,
+                                    enabled: _isEditing,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'firstNameRequired'.tr();
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const Divider(height: 24, thickness: 0.5),
+                                  _buildEditableInfoRow(
+                                    context,
+                                    icon: Icons.person_outline,
+                                    label: 'lastName'.tr(),
+                                    controller: _lastNameController,
+                                    enabled: _isEditing,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'lastNameRequired'.tr();
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const Divider(height: 24, thickness: 0.5),
+                                  _buildEditableInfoRow(
+                                    context,
+                                    icon: Icons.email_outlined,
+                                    label: 'emailAddress'.tr(),
+                                    controller: _emailController,
+                                    enabled: false,
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'emailRequired'.tr();
+                                      }
+                                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                          .hasMatch(value)) {
+                                        return 'invalidEmail'.tr();
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const Divider(height: 24, thickness: 0.5),
+                                  _buildEditableInfoRow(
+                                    context,
+                                    icon: Icons.phone_android_outlined,
+                                    label: 'phoneNumber'.tr(),
+                                    controller: _phoneController,
+                                    enabled: _isEditing,
+                                    keyboardType: TextInputType.phone,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'phoneRequired'.tr();
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const Divider(height: 24, thickness: 0.5),
+                                  _buildInfoRow(
+                                    context,
+                                    icon: Icons.star_outline,
+                                    label: 'points'.tr(),
+                                    value: '${_currentUser?.points ?? 0} ${'points'.tr()}',
+                                    trailing: (_currentUser?.points ?? 0) > 0
+                                        ? TextButton(
+                                      onPressed: () {
+                                        // Navigate to points screen
+                                      },
+                                      child: Text(
+                                        'redeem'.tr(),
+                                        style: TextStyle(
+                                            color: Theme.of(context).primaryColor,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                    )
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

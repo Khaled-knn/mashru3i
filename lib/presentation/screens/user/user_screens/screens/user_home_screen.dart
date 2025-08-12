@@ -3,6 +3,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -77,7 +78,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
             ),
             const SizedBox(height: 20),
             Container(
-              height: 55,
+              height: 65,
               child: Row(
                 children: [
                   Expanded(
@@ -96,7 +97,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                       height: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5),
-                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      
                         border: Border.all(
                           width: 1,
                           color: Theme.of(context).primaryColor
@@ -104,9 +105,32 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                       ),
                       child: Row(
                         children: [
-                          Text(LocaleKeys.mashru3iPoints.tr(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                          const Spacer(),
-                          Text('${user?.points}.0 Pts.', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                          Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                width: 1,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            child: Icon(Icons.emoji_events_outlined),
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          Column(
+                            children: [
+                              Expanded(child: Text('Balance', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold) ,textAlign: TextAlign.center,)),
+                              Row(
+                                children: [
+                                  Text('${user?.points}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 5,),
+                                  Text('Points', style: const TextStyle(fontSize: 15,)),
+                                ],
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

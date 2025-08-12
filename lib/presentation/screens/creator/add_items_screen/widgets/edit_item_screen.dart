@@ -164,7 +164,6 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // متغيرات رسالة التعديل
     final DateTime? createdAt = widget.itemToEdit.createdAt;
     String message = '';
     Color textColor =Theme.of(context).primaryColor;
@@ -196,7 +195,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           );
         }
       } else {
-        message = LocaleKeys.editWillCostTokens.tr(namedArgs: {'tokens': '5'});
+        message = LocaleKeys.editWillCostTokens.tr(namedArgs: {'tokens': '1'});
         textColor = Colors.orange.shade700;
         borderColor = Colors.orange.shade400;
       }
@@ -226,7 +225,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
             SnackBar(content: Text(state.error), backgroundColor: Colors.red),
           );
           if (mounted) {
-            setState(() => _isSubmitting = false); // إعادة تفعيل الزر أو إخفاء المؤشر على الفشل
+            setState(() => _isSubmitting = false);
           }
         }
       },
@@ -321,7 +320,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         ),
 
 
-                      if ([5].contains(_currentProfessionId))
+                      if ([1].contains(_currentProfessionId))
                         PortfolioLinksField(
                           professionId: _currentProfessionId,
                           initialLinks: _portfolioLinks,
@@ -736,7 +735,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
       final double price = double.tryParse(_priceController.text.trim()) ?? 0;
       final String token = CacheHelper.getData(key: 'token');
 
-      final DateTime? createdAt = widget.itemToEdit.createdAt; // افترض أن itemToEdit لديه createdAt
+      final DateTime? createdAt = widget.itemToEdit.createdAt;
       bool isMoreThan24Hours = false;
       if (createdAt != null) {
         final Duration difference = DateTime.now().difference(createdAt);
@@ -750,7 +749,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     final double? userTokens = context.read<DashBoardCubit>().creatorProfile!.tokens;
 
 
-        const int requiredTokens = 5;
+        const int requiredTokens = 1;
 
         if (userTokens == null || userTokens < requiredTokens) {
           if (mounted) {

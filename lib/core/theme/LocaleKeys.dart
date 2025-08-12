@@ -542,7 +542,10 @@ class LocaleKeys {
   static const String confirm_request_message = 'confirm_request_message'; // جديد
   static const String sending_request = 'sending_request'; // جديد
   static const String your_current_balance = 'your_current_balance';
+  static const String failed_to_accept_order = 'Failed to accept order';
   static const String could_not_launch_url = 'Could Not Launch Url';
+
+
 
 
 
