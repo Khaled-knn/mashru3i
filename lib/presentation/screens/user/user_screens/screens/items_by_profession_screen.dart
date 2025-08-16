@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart'; // <-- مهم لفورمات بديلة في البارسِر
 import 'package:mashrou3i/core/theme/color.dart';
 import 'package:mashrou3i/presentation/widgets/custom_button.dart';
 import '../../../../../core/theme/icons_broken.dart';
@@ -37,7 +38,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
   @override
   bool get wantKeepAlive => true;
 
-  late final StreamSubscription<UserItemsState> _subscription;
+  StreamSubscription<UserItemsState>? _subscription; // <-- صار nullable لتفادي التسريب
   List<CreatorItem> creators = [];
   bool _isLoading = true;
   String? _error;
@@ -70,6 +71,9 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
     _currentIsOpenNow = isOpenNow;
 
     final cubit = context.read<UserItemsCubit>();
+
+    // ألغِ أي اشتراك قديم قبل إنشاء واحد جديد
+    _subscription?.cancel();
     _subscription = cubit.stream.listen((state) {
       if (state is UserCreatorsLoading) {
         setState(() {
@@ -103,7 +107,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -167,7 +171,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                   _loadCreators();
                   context.read<CartCubit>().initializeCart();
                 },
-                child: Text('retry'.tr() , style: TextStyle(color: Colors.black),),
+                child: Text('retry'.tr(), style: const TextStyle(color: Colors.black)),
               ),
             ],
           ),
@@ -187,7 +191,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                 Text('no_creators_available'.tr()),
                 const SizedBox(height: 20),
                 CustomButton(
-                  onPressed: (){
+                  onPressed: () {
                     context.pop();
                   },
                   text: 'Go Back',
@@ -274,21 +278,20 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                   CircleAvatar(
                     backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
                     child: IconButton(
-                        onPressed: (){
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>  FavoriteCreatorsScreen(),
-                            ),
-                          );
-                        },
-                        icon: Icon(Icons.favorite , color: textColor,)),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FavoriteCreatorsScreen(),
+                          ),
+                        );
+                      },
+                      icon: Icon(Icons.favorite, color: textColor),
+                    ),
                   )
                 ],
               ),
-              SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
@@ -309,16 +312,18 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                       final currentDay = _getCurrentDay();
                       final currentTime = TimeOfDay.fromDateTime(now);
                       bool isAvailable = false;
+
                       for (final slot in creator.availability) {
+                        // مبدئياً نتحقق فقط من الوقت، ولو عندك يوم لكل slot لازم تضيف شرط اليوم
                         final openTime = _parseTime(slot.openAt);
                         final closeTime = _parseTime(slot.closeAt);
-        
+
                         final nowInMinutes = currentTime.hour * 60 + currentTime.minute;
                         final openInMinutes = openTime.hour * 60 + openTime.minute;
                         final closeInMinutes = closeTime.hour * 60 + closeTime.minute;
-        
+
                         final isOvernight = closeInMinutes < openInMinutes;
-        
+
                         if (isOvernight) {
                           if (nowInMinutes >= openInMinutes || nowInMinutes < closeInMinutes) {
                             isAvailable = true;
@@ -331,15 +336,27 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                           }
                         }
                       }
-        
+
+                      // استبدال DateTime.parse بـ parser مرن + toLocal
                       final activeOffers = creator.offers.where((offer) {
-                        final start = DateTime.parse(offer.start);
-                        final end = DateTime.parse(offer.end);
-                        return now.isAfter(start) && now.isBefore(end);
+                        try {
+                          final start = _parseDateFlexible(offer.start)?.toLocal();
+                          final end = _parseDateFlexible(offer.end)?.toLocal();
+                          if (start == null || end == null) return false;
+                          return now.isAfter(start) && now.isBefore(end);
+                        } catch (e) {
+                          debugPrint('Invalid offer date. start=${offer.start}, end=${offer.end}, err=$e');
+                          return false;
+                        }
                       }).toList();
-                      final hasFreeDelivery = activeOffers.any((offer) => offer.type == 'free_delivery');
-                      final hasAllOrdersDiscountOffer = activeOffers.any((offer) => offer.type == 'all_orders_discount');
-                      final hasFirstOrderDiscount = activeOffers.any((offer) => offer.type == 'first_order_discount');
+
+                      final hasFreeDelivery =
+                      activeOffers.any((offer) => offer.type == 'free_delivery');
+                      final hasAllOrdersDiscountOffer =
+                      activeOffers.any((offer) => offer.type == 'all_orders_discount');
+                      final hasFirstOrderDiscount =
+                      activeOffers.any((offer) => offer.type == 'first_order_discount');
+
                       return _buildCreatorCard(
                         context: context,
                         creator: creator,
@@ -359,6 +376,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
       ),
     );
   }
+
   Widget _buildCreatorCard({
     required BuildContext context,
     required CreatorItem creator,
@@ -376,7 +394,10 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
           context,
           MaterialPageRoute(
             builder: (context) => ItemsByCreatorIdScreen(
-              creator: creator , professionID: widget.professionId, isAvailable: isAvailable,),
+              creator: creator,
+              professionID: widget.professionId,
+              isAvailable: isAvailable,
+            ),
           ),
         ).then((_) {
           if (mounted) {
@@ -600,7 +621,7 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                                   ),
                                 ),
                                 Text(
-                                  ' ( ${creator.rateCount != null ? creator.rateCount.toStringAsFixed(0) : 'N/A'} )',
+                                  ' ( ${(creator.rateCount is num) ? (creator.rateCount as num).toStringAsFixed(0) : (creator.rateCount?.toString() ?? 'N/A')} )',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[800],
@@ -639,24 +660,25 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                       const SizedBox(height: 8),
 
                       if (!hasFreeDelivery)
-                        if(widget.professionId!=5 && widget.professionId!=6)// Show delivery value only if there's no free delivery offer
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.delivery_dining,
-                              size: 16,
-                              color: textColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Delivery: ${creator.deliveryValue.toStringAsFixed(2)} \$',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                        if (widget.professionId != 5 && widget.professionId != 6)
+                        // Show delivery value only if there's no free delivery offer
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.delivery_dining,
+                                size: 16,
+                                color: textColor,
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Delivery: ${creator.deliveryValue.toStringAsFixed(2)} \$',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
                       if (activeOffers.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
@@ -688,11 +710,14 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                                   final isAllOrdersDiscount = offer.type == 'all_orders_discount';
                                   final isFirstOrderDiscount = offer.type == 'first_order_discount';
 
-                                  final endDate = DateTime.parse(offer.end);
-                                  final remainingDays = endDate.difference(now).inDays;
+                                  final endDate = _parseDateFlexible(offer.end)?.toLocal();
+                                  int? remainingDays;
+                                  if (endDate != null) {
+                                    remainingDays = endDate.difference(now).inDays;
+                                  }
 
                                   String remainingText = '';
-                                  if (!isFreeDelivery) { // Don't show remaining text for free delivery
+                                  if (!isFreeDelivery && remainingDays != null) {
                                     if (remainingDays > 0) {
                                       remainingText = ' ${"ends_in".tr(namedArgs: {"daysLeft": remainingDays.toString()})}';
                                     } else if (remainingDays == 0) {
@@ -711,11 +736,15 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
                                   } else if (isAllOrdersDiscount) {
                                     offerColor = Colors.red;
                                     offerIcon = Icons.discount;
-                                    offerDescription = '${offer.value.split('.')[0]}% ${'all_orders_discount_text'.tr()}';
+                                    final val = offer.value?.toString() ?? '0';
+                                    final perc = val.contains('.') ? val.split('.')[0] : val;
+                                    offerDescription = '$perc% ${'all_orders_discount_text'.tr()}';
                                   } else if (isFirstOrderDiscount) {
                                     offerColor = Colors.teal;
                                     offerIcon = Icons.star;
-                                    offerDescription = '${offer.value.split('.')[0]}% ${'first_order_discount_text'.tr()}';
+                                    final val = offer.value?.toString() ?? '0';
+                                    final perc = val.contains('.') ? val.split('.')[0] : val;
+                                    offerDescription = '$perc% ${'first_order_discount_text'.tr()}';
                                   } else {
                                     offerColor = Colors.orange;
                                     offerIcon = Icons.local_offer;
@@ -803,7 +832,6 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
     return TimeOfDay(hour: hour, minute: minute);
   }
 
-
   String _getCurrentDay() {
     final now = DateTime.now();
     switch (now.weekday) {
@@ -824,5 +852,49 @@ class _ItemsByProfessionScreenState extends State<ItemsByProfessionScreen>
       default:
         return '';
     }
+  }
+
+  /// Parser مرن للتواريخ:
+  /// - يدعم DateTime مباشرة
+  /// - يدعم أرقام epoch (10 ثواني / 13 ميلي ثانية)
+  /// - يحاول ISO وكم نمط شائع
+  /// - يرجّع null إذا مستحيل يفسّر القيمة
+  DateTime? _parseDateFlexible(dynamic input) {
+    if (input == null) return null;
+    if (input is DateTime) return input;
+
+    final s = input.toString().trim();
+    if (s.isEmpty || s.toLowerCase() == 'null') return null;
+
+    // رقم؟ (epoch seconds/millis)
+    final digits = RegExp(r'^\d{10,13}$');
+    if (digits.hasMatch(s)) {
+      final n = int.parse(s);
+      final ms = s.length == 13 ? n : n * 1000; // 10 = ثواني، 13 = ميلي
+      return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+    }
+
+    // محاولة ISO مباشرة
+    final direct = DateTime.tryParse(s);
+    if (direct != null) return direct;
+
+    // فورمات بديلة
+    const patterns = [
+      'yyyy-MM-dd HH:mm:ss',
+      'yyyy-MM-dd HH:mm',
+      'yyyy/MM/dd HH:mm:ss',
+      'yyyy/MM/dd HH:mm',
+      'MM/dd/yyyy HH:mm:ss',
+      'MM/dd/yyyy HH:mm',
+      'yyyy-MM-dd',
+      'yyyy/MM/dd',
+    ];
+    for (final p in patterns) {
+      try {
+        return DateFormat(p).parseStrict(s);
+      } catch (_) {}
+    }
+
+    return null;
   }
 }

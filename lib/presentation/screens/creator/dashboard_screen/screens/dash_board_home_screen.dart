@@ -538,7 +538,7 @@ class _DashBoardHomeScreenState extends State<DashBoardHomeScreen> {
         _buildDetailRow(LocaleKeys.delivery_fee.tr(), '\$0.00'),
         _buildDetailRow(LocaleKeys.total.tr(), '\$${order.totalAmount.toStringAsFixed(2)}',
             isBold: true),
-        _buildDetailRow(LocaleKeys.date.tr(), DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt)),
+        _buildDetailRow(LocaleKeys.date.tr(), DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt.toLocal())),
       ],
     );
   }

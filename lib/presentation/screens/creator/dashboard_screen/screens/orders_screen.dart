@@ -63,20 +63,51 @@ class _OrdersScreenState extends State<OrdersScreen> {
   // تنسيق سريع
   String _fmt(num v) => v.toStringAsFixed(2);
 
+  String _mapPaymentToEmoji(String? method) {
+    if (method == null || method.trim().isEmpty) return '💲 ${LocaleKeys.not_provided.tr()}';
+    switch (method.toLowerCase()) {
+      case 'whish':
+      case 'whishmoney':
+      case 'wishmoney':
+        return '💛 Whish';
+      case 'omt':
+        return '🏦 OMT';
+      case 'cash_on_delivery':
+      case 'cod':
+        return '💵 Cash on Delivery';
+      default:
+        return '💲 ${method.replaceAll('_', ' ').toUpperCase()}';
+    }
+  }
+
   // ⬇️ NEW: مشاركة معلومات الطلب المكتمل
   void _shareOrderInfo(CreatorOrder order) {
-    final name = order.userFirstName?.trim().isNotEmpty == true ? order.userFirstName!.trim() : LocaleKeys.unknown.tr();
-    final phone = order.userPhoneNumber?.trim().isNotEmpty == true ? order.userPhoneNumber!.trim() : LocaleKeys.not_provided.tr();
-    final address = order.shippingAddress?.trim().isNotEmpty == true ? order.shippingAddress!.trim() : LocaleKeys.not_provided.tr();
+    final name = order.userFirstName?.trim().isNotEmpty == true
+        ? order.userFirstName!.trim()
+        : LocaleKeys.unknown.tr();
+
+    final phone = order.userPhoneNumber?.trim().isNotEmpty == true
+        ? order.userPhoneNumber!.trim()
+        : LocaleKeys.not_provided.tr();
+
+    final address = order.shippingAddress?.trim().isNotEmpty == true
+        ? order.shippingAddress!.trim()
+        : LocaleKeys.not_provided.tr();
+
+    final total = '\$${order.totalAmount.toStringAsFixed(2)}';
+    final paymentLabel = _mapPaymentToEmoji(order.paymentMethod);
 
     final text = StringBuffer()
       ..writeln('🧾 ${LocaleKeys.order.tr()} #${order.orderId}')
       ..writeln('👤 ${LocaleKeys.customer.tr()}: $name')
       ..writeln('📞 ${LocaleKeys.phone.tr()}: $phone')
-      ..writeln('📍 ${LocaleKeys.address.tr()}: $address');
+      ..writeln('📍 ${LocaleKeys.address.tr()}: $address')
+      ..writeln('💰 ${LocaleKeys.total.tr()}: $total')
+      ..writeln('💳 ${LocaleKeys.payment_method.tr()}: $paymentLabel');
 
     Share.share(text.toString());
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -299,8 +330,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        if (order.status.toLowerCase() == 'accepted' ||
-                            order.status.toLowerCase() == 'completed')
+                        if (order.status.toLowerCase() == 'completed')
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -592,7 +622,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         const SizedBox(height: 8),
         _buildDetailRow(
           LocaleKeys.order_date.tr(),
-          DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt),
+          DateFormat('MMM dd, yyyy - hh:mm a').format(order.createdAt.toLocal()),
         ),
         const SizedBox(height: 16),
       ],

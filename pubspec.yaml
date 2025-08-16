@@ -72,7 +72,7 @@ flutter_native_splash:
   color: "#77f7d3"
   image: assets/images/icon-m.jpeg
   android: true
-  ios: true
+  ios: false
 
 flutter:
   uses-material-design: true

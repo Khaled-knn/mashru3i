@@ -3,7 +3,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -79,34 +78,69 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
             const SizedBox(height: 20),
             Container(
               height: 65,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
+                  // Left side: title + subtitle
                   Expanded(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(LocaleKeys.whereHome.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 10),
 
-                        Text(LocaleKeys.talentMeetsYourNeeds.tr(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1,),
+                        // Title with home icon aligned to the text baseline
+                        Text.rich(
+                          TextSpan(
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            children: [
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 6),
+                                  child: Icon(Icons.home_outlined, size: 18),
+                                ),
+                              ),
+                              TextSpan(text: LocaleKeys.whereHome.tr()),
+                            ],
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          LocaleKeys.talentMeetsYourNeeds.tr(),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(width: 10),
+
+                  // Right side: balance box
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 10
+                      ),
                       height: double.infinity,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                      
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           width: 1,
-                          color: Theme.of(context).primaryColor
-                        )
+                          color: Theme.of(context).primaryColor,
+                        ),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // circular icon
                           Container(
-                            padding: EdgeInsets.all(5),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -114,22 +148,40 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                                 color: Theme.of(context).primaryColor,
                               ),
                             ),
-                            child: Icon(Icons.emoji_events_outlined),
+                            child: const Icon(Icons.emoji_events_outlined, size: 18),
                           ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Column(
-                            children: [
-                              Expanded(child: Text('Balance', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold) ,textAlign: TextAlign.center,)),
-                              Row(
-                                children: [
-                                  Text('${user?.points}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                  SizedBox(width: 5,),
-                                  Text('Points', style: const TextStyle(fontSize: 15,)),
-                                ],
-                              ),
-                            ],
+                          const SizedBox(width: 12),
+                          // balance texts
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'Balance',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      '${user?.points ?? 0}',
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'Points',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -138,6 +190,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                 ],
               ),
             ),
+
             const SizedBox(height: 20),
             BlocBuilder<UserItemsCubit, UserItemsState>(
               builder: (context, state) {
@@ -396,3 +449,4 @@ class Category {
   final String title;
   Category({required this.id, required this.imagePath, required this.title});
 }
+

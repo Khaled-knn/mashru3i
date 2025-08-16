@@ -327,7 +327,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy - hh:mm a').format(date);
+    return DateFormat('MMM dd, yyyy - hh:mm a').format(date.toLocal());
   }
 
   void _showOrderDetails(BuildContext context, UserOrder order) {

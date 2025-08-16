@@ -927,18 +927,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>  {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 60,
-            color: Colors.grey[400],
-          ),
+
           const SizedBox(height: 20),
           Text(
-            widget.isAvailable ? 'loading_product'.tr() : 'product_not_available'.tr(),
+            widget.isAvailable ? 'loading product'.tr() : 'product_not_available'.tr(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: widget.isAvailable ? Colors.blue : Colors.red,
+              color: textColor,
             ),
           ),
           if (widget.isAvailable)

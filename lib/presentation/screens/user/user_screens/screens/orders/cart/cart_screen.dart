@@ -757,7 +757,6 @@ class _CartScreenState extends State<CartScreen> {
 
 
 
-
   void _placeOrder(BuildContext context, List<CreatorPaymentMethodModel> creatorPaymentMethods) async {
     final cartCubit = context.read<CartCubit>();
 
