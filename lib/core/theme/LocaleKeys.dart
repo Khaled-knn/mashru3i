@@ -544,6 +544,10 @@ class LocaleKeys {
   static const String your_current_balance = 'your_current_balance';
   static const String failed_to_accept_order = 'Failed to accept order';
   static const String could_not_launch_url = 'Could Not Launch Url';
+  static const String auth_sign_in_or_create = 'sign_in_or_create';
+  static const String auth_continue_as_guest = 'continue_as_guest';
+  static const String auth_login_required_subtitle = 'login_required_subtitle';
+  static const String auth_login_required_title = 'login_required_title';
 
 
 

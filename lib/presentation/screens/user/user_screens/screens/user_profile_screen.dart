@@ -142,7 +142,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> with WidgetsBindi
               ),
               child: const CircleAvatar(
                 radius: 30,
-                backgroundImage: AssetImage('assets/images/icon-m.jpeg'),
+                backgroundImage: AssetImage('assets/images/icon-m.png'),
               ),
             ),
             const SizedBox(width: 16),

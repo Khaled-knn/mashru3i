@@ -49,24 +49,24 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    final String? token = CacheHelper.getData(key: 'token');
+    final String? token = CacheHelper.getData(key: 'token');       // creator
     final bool? approved = CacheHelper.getData(key: 'approved');
-    final String? userToken = CacheHelper.getData(key: 'userToken');
+    final String? userToken = CacheHelper.getData(key: 'userToken'); // user
 
-    if (userToken !=null){
+    if (userToken != null) {
       context.go('/UserLayout');
-    }
-    else if (token != null) {
-      if(approved==true){
+    } else if (token != null) {
+      if (approved == true) {
         context.go('/DashBoardScreen');
-      }else{
+      } else {
         context.go('/PendingApprovalScreen');
       }
-
     } else {
-      context.go('/choose');
+      CacheHelper.saveData(key: 'guest', value: true);
+      context.go('/UserLayout', extra: {'guest': true});
     }
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

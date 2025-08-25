@@ -6,15 +6,11 @@ import 'package:mashrou3i/core/theme/color.dart';
 import 'package:mashrou3i/presentation/screens/creator/dashboard_screen/screens/wallet_screen.dart';
 import 'package:mashrou3i/presentation/widgets/compnents.dart';
 import 'package:share_plus/share_plus.dart';
-
-
 import '../../../../../core/theme/LocaleKeys.dart';
 import '../../../../../core/theme/icons_broken.dart';
 import '../../../../../data/models/crator_order_model.dart';
 import '../../order/order_cubit.dart';
 import '../../order/order_states.dart';
-
-// ⬇️ مضافة: لجلب رصيد المحفظة وفتح شاشة الشحن
 import '../logic/dashboard_cibit.dart';
 import '../logic/dashboard_states.dart';
 
@@ -30,14 +26,12 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   final TextEditingController _deliveryTimeController = TextEditingController();
 
-  // النسبة المطلوبة من قيمة الطلب كرصيد في المحفظة
   static const double _requiredPercent = 0.05; // 5%
 
   @override
   void initState() {
     super.initState();
     _fetchOrders();
-    // نجلب رصيد المحفظة أول ما تفتح الشاشة
     context.read<DashBoardCubit>().getProfileData();
   }
 
@@ -45,7 +39,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final token = CacheHelper.getData(key: 'token');
     if (token != null) {
       context.read<CreatorOrderCubit>().fetchCreatorOrders(token);
-      // مع كل ريفرش حدّث الرصيد
       context.read<DashBoardCubit>().getProfileData();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +53,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
     super.dispose();
   }
 
-  // تنسيق سريع
   String _fmt(num v) => v.toStringAsFixed(2);
 
   String _mapPaymentToEmoji(String? method) {
@@ -80,7 +72,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  // ⬇️ NEW: مشاركة معلومات الطلب المكتمل
   void _shareOrderInfo(CreatorOrder order) {
     final name = order.userFirstName?.trim().isNotEmpty == true
         ? order.userFirstName!.trim()

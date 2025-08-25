@@ -594,6 +594,24 @@
 
   "favorite_creators": "المبدعون المفضلون",
   "no_favorites_yet": "لا توجد عناصر مفضلة بعد",
-  "add_favorites_description": "أضف مبدعين إلى مفضلتك لتراهم هنا."
+  "add_favorites_description": "أضف مبدعين إلى مفضلتك لتراهم هنا.",
+  "login_required_title": "مطلوب تسجيل الدخول",
+  "login_required_subtitle": "سجّل الدخول لإتمام الطلبات، إدارة السلة، واستلام الإشعارات.",
+  "continue_as_guest": "متابعة كضيف",
+  "sign_in_or_create": "تسجيل الدخول / إنشاء حساب",
+  "guest_cart_title": "سجّل الدخول لعرض سلتك",
+  "guest_cart_subtitle": "أنشئ حسابًا أو سجّل الدخول لإتمام الطلبات، إدارة السلة وتتبع التوصيل.",
+  "sign_in": "تسجيل الدخول",
+  "maybe_later": "لاحقًا",
+  "you_will_choose_payment_after_approval": "ستختار طريقة الدفع بعد موافقة المُنشئ على طلبك.",
+  "no_address_selected": "لا يوجد عنوان محدد",
+  "guest_cart_title": "سجّل الدخول لعرض سلتك",
+  "guest_cart_subtitle": "أنشئ حسابًا أو سجّل الدخول لإتمام الطلبات، إدارة السلة وتتبع التوصيل.",
+  "sign_in": "تسجيل الدخول",
+  "maybe_later": "لاحقًا",
+  "login_to_earn_points": "سجّل الدخول لكسب النقاط",
+  "continue_as_guest": "متابعة كضيف",
+  "browsing_as_guest": "أنت تتصفح كضيف"
+
 
 }

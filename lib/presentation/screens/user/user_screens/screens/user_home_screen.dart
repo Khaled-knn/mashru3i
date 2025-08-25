@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/helper/user_data_manager.dart';
+import '../../../../../core/network/local/cach_helper.dart';
 import '../../../../../core/theme/LocaleKeys.dart';
 import '../../../../../core/theme/icons_broken.dart';
 import '../../../../../data/models/advertisement_model.dart';
@@ -37,6 +38,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
   final String noAdsPlaceholderImage = 'assets/images/no_ads_placeholder.png';
 
 
+
   @override
   void initState() {
     super.initState();
@@ -65,7 +67,10 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
+
     final user = UserDataManager.getUserModel();
+    final bool isGuest = (CacheHelper.getData(key: 'guest') == true) ||
+        (CacheHelper.getData(key: 'userToken') == null);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -151,7 +156,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                             child: const Icon(Icons.emoji_events_outlined, size: 18),
                           ),
                           const SizedBox(width: 12),
-                          // balance texts
+
+                          // balance / guest texts
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -164,27 +170,48 @@ class _UserHomeScreenState extends State<UserHomeScreen> with WidgetsBindingObse
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 2),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      '${user?.points ?? 0}',
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      'Points',
-                                      style: TextStyle(fontSize: 13),
-                                    ),
-                                  ],
-                                ),
+
+                                if (isGuest)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          'login_to_earn_points'.tr(),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        '${user?.points ?? 0}',
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'Points',
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),
                         ],
                       ),
+
                     ),
                   ),
                 ],

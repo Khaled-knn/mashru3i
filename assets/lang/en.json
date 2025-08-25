@@ -600,6 +600,25 @@
   "favorite_creators": "Favorite Store",
   "no_favorites_yet": "No favorites yet",
   "add_favorites_description": "Add creators to your favorites to see them here.",
-  "Delivery": "Delivery"
+  "Delivery": "Delivery",
+  "login_required_title": "Sign in required",
+  "login_required_subtitle": "Sign in to place orders, manage your cart, and receive notifications.",
+  "continue_as_guest": "Continue as guest",
+  "sign_in_or_create": "Sign in / Create account",
+  "guest_cart_subtitle": "Create an account or sign in to place orders, manage your cart and track deliveries.",
+  "sign_in": "Sign in",
+  "maybe_later": "Maybe later",
+
+
+  "guest_cart_title": "Sign in to view your cart",
+  "guest_cart_subtitle": "Create an account or sign in to place orders, manage your cart and track deliveries.",
+  "sign_in": "Sign in",
+  "maybe_later": "Maybe later",
+  "you_will_choose_payment_after_approval": "You will choose a payment method after the creator approves your order.",
+  "no_address_selected": "No address selected",
+  "login_to_earn_points": "Sign in to earn points",
+  "continue_as_guest": "Continue as guest",
+  "browsing_as_guest": "You’re browsing as a guest"
+
 }
 
