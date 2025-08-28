@@ -69,10 +69,16 @@ class UserLogin extends StatelessWidget {
                 Stack(
                   children: [
                     withNav(context),
-                    Column(
-                      children: [
-                        const UserLoginForm(),
-                      ],
+
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 30
+                      ),
+                      child: Column(
+                        children: [
+                          const UserLoginForm(),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -123,22 +129,6 @@ class UserLogin extends StatelessWidget {
                   elevation: 3.0,
                   onPressed: isLoading ? null : () => LoginCubit.get(context).signInWithGoogle(),
                   backgroundColor: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                SocialButton(
-                  text: 'Log in with Apple',
-                  icon: Icons.apple_sharp,
-                  iconSize: 30,
-                  elevation: 3.0,
-                  onPressed: isLoading ? null : (){},
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                SocialButton(
-                  text: 'Log in with Facebook',
-                  icon: FontAwesomeIcons.facebook,
-                  iconColor: const Color(0xFF1877F2),
-                  elevation: 3.0,
-                  onPressed: isLoading ? null : () {},
                   borderRadius: BorderRadius.circular(25),
                 ),
               ],
