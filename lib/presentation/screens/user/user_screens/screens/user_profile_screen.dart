@@ -7,6 +7,7 @@ import 'package:badges/badges.dart' as badges;
 
 import '../../../../../core/cubit/language_cubit.dart';
 import '../../../../../core/helper/user_data_manager.dart';
+import '../../../../../core/network/local/cach_helper.dart';
 import '../../../../../core/theme/LocaleKeys.dart';
 import '../../../../../core/theme/color.dart';
 import '../../../../../core/theme/icons_broken.dart';
@@ -231,8 +232,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> with WidgetsBindi
           onTap: () {
             context.push('/PrivacyPolicyScreen');
           },
+
         ),
-        const SizedBox(height: 8),
+
+        _buildDeleteAccountButton(context),
+
+
         _buildLogoutButton(context),
       ],
     );
@@ -460,4 +465,125 @@ class _UserProfileScreenState extends State<UserProfileScreen> with WidgetsBindi
       ),
     );
   }
+
+
+  Widget _buildDeleteAccountButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Card(
+        color: Theme.of(context).primaryColor.withOpacity(0.2),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ListTile(
+          leading: const Icon(Icons.delete_forever, color: Colors.red),
+          title: Text(
+            'delete_account.button'.tr(),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.red[700],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          onTap: () {
+            _showDeleteConfirmationDialog(context);
+          },
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              const SizedBox(width: 8),
+              Text('delete_account.dialog_title'.tr()),
+            ],
+          ),
+          content: Text(
+            'delete_account.dialog_message'.tr(),
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'delete_account.cancel'.tr(),
+                style: TextStyle(color: textColor),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text('delete_account.confirm'.tr()),
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Close dialog
+                _deleteAccount(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final jwt = CacheHelper.getData(key: 'userToken') ?? CacheHelper.getData(key: 'token');
+    if (jwt == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('delete_account.not_authenticated'.tr())),
+      );
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await context.read<DashBoardCubit>().deleteUserAccount(
+      jwtToken: jwt,
+      onSuccess: () {
+        Navigator.of(context).pop(); // close loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Theme.of(context).primaryColor,
+            content: Text(
+              'delete_account.success'.tr(),
+              style: const TextStyle(color: Colors.black),
+            ),
+          ),
+        );
+        context.read<DashBoardCubit>().logout();
+        context.go('/choose');
+      },
+      onError: (msg) {
+        Navigator.of(context).pop(); // close loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg ?? 'delete_account.failure'.tr())),
+        );
+      },
+    );
+  }
+
+
+
 }

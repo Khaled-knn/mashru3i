@@ -403,6 +403,62 @@ class DashBoardCubit extends Cubit<DashBoardStates> {
     }
   }
 
+
+
+  Future<void> deleteUserAccount({
+    required String jwtToken,
+    VoidCallback? onSuccess,
+    void Function(String? message)? onError,
+  }) async {
+    emit(LogoutLoadingState()); // نستخدم حالة جاهزة عنا - أو اعمل حالة خاصة Delete
+    try {
+      final dio = Dio();
+      final resp = await dio.delete(
+        'http://46.202.175.64:3000/api/auth/users/me', // أو استبدل بـ Endpoints جاهز عندك
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (s) => s != null && s < 500,
+        ),
+      );
+
+      if (resp.statusCode == 200) {
+        // امسح التوكن والبيانات المحلية مثل logout
+        await CacheHelper.removeData(key: 'token');
+        await CacheHelper.removeData(key: 'userToken');
+
+        // إحتمال عندك مفاتيح إضافية بتشيلها وقت الـ logout — خليها نفس منطقك تماماً:
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('address_seen');
+          await prefs.remove('availability_seen');
+          await prefs.remove('promotions_seen');
+          await prefs.remove('payment_seen');
+          await prefs.remove('profile_badge_seen');
+        } catch (_) {}
+
+        // لو بتسجّل خروج من Google/Firebase
+        try { await GoogleSignIn().signOut(); } catch (_) {}
+        try { await FirebaseAuth.instance.signOut(); } catch (_) {}
+
+        creatorProfile = null;
+        emit(LoggedOutState());
+        onSuccess?.call();
+      } else {
+        final msg = (resp.data is Map && resp.data['message'] != null)
+            ? resp.data['message'].toString()
+            : 'Delete failed (${resp.statusCode})';
+        emit(LogoutErrorState(msg));
+        onError?.call(msg);
+      }
+    } catch (e) {
+      emit(LogoutErrorState('Network/Server error'));
+      onError?.call(e.toString());
+    }
+  }
+
 }
 
 

@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 
 import '../../../../../core/helper/user_data_manager.dart';
@@ -322,5 +324,102 @@ class LoginCubit extends Cubit<LoginState> {
       emit(UpdateProfileErrorState('An unexpected error occurred during profile update.'));
     }
   }
+
+
+  // Helpers لعمل nonce و sha256 (تُستخدم للتوقيع مع Apple → Firebase)
+  String _nonce(int length) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    var t = DateTime.now().microsecondsSinceEpoch;
+    return List.generate(length, (i) => chars[(t + i) % chars.length]).join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<void> signInWithApple() async {
+    emit(LoginLoadingState());
+    try {
+      // 1) Apple credential عبر الحزمة
+      final rawNonce = _nonce(32);
+      final hashedNonce = _sha256ofString(rawNonce);
+
+      final appleCred = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      // 2) حوّل لـ FirebaseAuth OAuthProvider("apple.com")
+      final oauth = OAuthProvider("apple.com").credential(
+        idToken: appleCred.identityToken,
+        rawNonce: rawNonce,
+      );
+
+      final UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithCredential(oauth);
+
+      // 3) خُذ Firebase ID Token لإرساله للباك-إند
+      final String? idToken = await userCredential.user?.getIdToken();
+      if (idToken == null) {
+        emit(LoginErrorState('Failed to get ID Token from Firebase.'));
+        return;
+      }
+
+      // 4) ندقّ على باك-إندك (Route اللي حضّرته: /api/auth/apple-signin)
+      final response = await DioHelper.postData(
+        url: '/api/auth/apple-signin',
+        data: {'idToken': idToken},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final String? backendToken = data['token'];
+        final Map<String, dynamic>? userData = data['user'];
+
+        if (backendToken != null && userData != null) {
+          // خزّن الـ JWT و الـ user مثل Google تماماً
+          final user = UserModel.fromJson(userData);
+          final int? userId = userData['id'];
+
+          if (userId != null) {
+            await CacheHelper.saveData(key: 'userIdTwo', value: userId);
+          }
+          await CacheHelper.saveData(key: 'userToken', value: backendToken);
+          await UserDataManager.saveUserData(token: backendToken, user: user);
+
+          emit(LoginSuccessState(data));
+        } else {
+          emit(LoginErrorState('Failed to retrieve token or user data from backend.'));
+        }
+      } else {
+        final errorMessage = response.data['message'] ??
+            'Failed to sign in with Apple: ${response.statusMessage}';
+        emit(LoginErrorState(errorMessage));
+      }
+    } on DioException catch (e) {
+      print(e.message);
+      String errorMessage = 'Error sending Apple token to backend.';
+      if (e.response != null && e.response!.data != null) {
+
+        errorMessage =
+            e.response!.data['message'] ?? e.response!.statusMessage ?? errorMessage;
+        print(errorMessage);
+      } else {
+        errorMessage = e.message ?? 'Network error. Check your connection.';
+        print(errorMessage);
+      }
+      print(errorMessage.toString());
+      emit(LoginErrorState(errorMessage));
+    } catch (e) {
+      print(e.toString());
+      emit(LoginErrorState('Apple Sign-In failed: ${e.toString()}'));
+    }
+  }
+
 }
 

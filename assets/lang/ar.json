@@ -611,7 +611,19 @@
   "maybe_later": "لاحقًا",
   "login_to_earn_points": "سجّل الدخول لكسب النقاط",
   "continue_as_guest": "متابعة كضيف",
-  "browsing_as_guest": "أنت تتصفح كضيف"
+  "browsing_as_guest": "أنت تتصفح كضيف",
+
+
+  "delete_account": {
+    "button": "حذف الحساب",
+    "dialog_title": "حذف الحساب",
+    "dialog_message": "هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع بياناتك نهائيًا ولا يمكن استعادتها.",
+    "cancel": "إلغاء",
+    "confirm": "نعم، احذف",
+    "not_authenticated": "غير مسجّل الدخول",
+    "success": "تم حذف الحساب بنجاح",
+    "failure": "فشل حذف الحساب"
+  }
 
 
 }

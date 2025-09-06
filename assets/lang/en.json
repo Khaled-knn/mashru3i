@@ -618,7 +618,18 @@
   "no_address_selected": "No address selected",
   "login_to_earn_points": "Sign in to earn points",
   "continue_as_guest": "Continue as guest",
-  "browsing_as_guest": "You’re browsing as a guest"
+  "browsing_as_guest": "You’re browsing as a guest",
+
+  "delete_account": {
+    "button": "Delete Account",
+    "dialog_title": "Delete Account",
+    "dialog_message": "This action is irreversible. All your data will be permanently deleted and cannot be recovered.",
+    "cancel": "Cancel",
+    "confirm": "Yes, delete",
+    "not_authenticated": "Not authenticated",
+    "success": "Account deleted successfully",
+    "failure": "Failed to delete account"
+  }
 
 }
 

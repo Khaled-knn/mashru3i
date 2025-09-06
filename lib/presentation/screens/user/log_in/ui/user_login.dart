@@ -1,5 +1,6 @@
 import 'dart:convert'; // ممكن تحتاجه إذا كنت بتتعامل مع JSON يدوياً (بس هنا مو كثير)
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -131,6 +132,25 @@ class UserLogin extends StatelessWidget {
                   backgroundColor: Colors.grey[50],
                   borderRadius: BorderRadius.circular(25),
                 ),
+                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  const SizedBox(height: 12),
+                  SocialButton(
+                    text: isLoading ? '' : 'Sign in with Apple',
+                    icon: isLoading ? null : FontAwesomeIcons.apple, // أيقونة Apple
+                    iconColor: Colors.black,
+                    iconWidget: isLoading
+                        ? const SizedBox(
+                      width: 24, height: 24,
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                        : null,
+                    elevation: 3.0,
+                    onPressed: isLoading ? null : () => LoginCubit.get(context).signInWithApple(),
+                    backgroundColor: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ],
+
               ],
             ),
           );
