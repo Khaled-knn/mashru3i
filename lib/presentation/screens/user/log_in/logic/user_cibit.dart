@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:bloc/bloc.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -340,11 +342,24 @@ class LoginCubit extends Cubit<LoginState> {
     return List.generate(length, (i) => chars[(seed + i) % chars.length]).join();
   }
 
+
+
+
+
+
+
+  String _secureNonce([int length = 32]) {
+    final rnd = Random.secure();
+    final bytes = Uint8List.fromList(List<int>.generate(length, (_) => rnd.nextInt(256)));
+    return base64Url.encode(bytes).replaceAll('=', ''); // URL-safe, بلا padding
+  }
+
   String _sha256ofString(String input) {
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
+
   Map<String, dynamic>? _decodeJwtPayload(String jwt) {
     try {
       final parts = jwt.split('.');
@@ -357,10 +372,11 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
+// === Main ===
   Future<void> signInWithApple() async {
     emit(LoginLoadingState());
     try {
-      final rawNonce = _nonce(32);
+      final rawNonce = _secureNonce(32);
       final hashedNonce = _sha256ofString(rawNonce);
 
       debugPrint('--- Apple Sign-In DEBUG START ---');
@@ -376,18 +392,20 @@ class LoginCubit extends Cubit<LoginState> {
       debugPrint('apple.givenName=${appleCred.givenName}  familyName=${appleCred.familyName}');
       debugPrint('apple.identityToken.length=${appleCred.identityToken?.length ?? 0}');
       debugPrint('apple.authorizationCode.length=${appleCred.authorizationCode?.length ?? 0}');
+
       if (appleCred.identityToken == null || appleCred.identityToken!.isEmpty) {
-        debugPrint('Apple returned empty identityToken → غالباً مشكلة capability/profile/إعداد الجهاز.');
         emit(LoginErrorState('Apple returned empty token. Please try again.'));
         return;
       }
-      final appleJwtPayload = _decodeJwtPayload(appleCred.identityToken!);
-      debugPrint('apple.jwt.payload=$appleJwtPayload');
-      debugPrint('apple.jwt.claims: iss=${appleJwtPayload?["iss"]}, aud=${appleJwtPayload?["aud"]}, nonce=${appleJwtPayload?["nonce"]}, nonce_supported=${appleJwtPayload?["nonce_supported"]}');
+
+      final payload = _decodeJwtPayload(appleCred.identityToken!);
+      debugPrint('apple.jwt.claims: iss=${payload?["iss"]}, aud=${payload?["aud"]}, nonce_supported=${payload?["nonce_supported"]}');
       final oauth = OAuthProvider("apple.com").credential(
         idToken: appleCred.identityToken,
         rawNonce: rawNonce,
       );
+
+      // 4) سجّل بفirebase
       UserCredential userCredential;
       try {
         userCredential = await FirebaseAuth.instance.signInWithCredential(oauth);
@@ -396,16 +414,19 @@ class LoginCubit extends Cubit<LoginState> {
         emit(LoginErrorState('[${e.code}] ${e.message ?? 'Firebase auth failed'}'));
         return;
       }
+
+      // 5) خذ Firebase ID Token للباك إند
       final String? idToken = await userCredential.user?.getIdToken(true);
       final tokenResult = await userCredential.user?.getIdTokenResult(true);
       debugPrint('firebase.idToken.length=${idToken?.length ?? 0}');
       debugPrint('firebase.signInProvider=${tokenResult?.signInProvider}');
-      debugPrint('firebase.claims=${tokenResult?.claims}');
 
       if (idToken == null || idToken.isEmpty) {
         emit(LoginErrorState('Failed to get Firebase ID Token.'));
         return;
       }
+
+      // 6) نادِ الباك إند
       final response = await DioHelper.postData(
         url: '/api/auth/apple-signin',
         data: {'idToken': idToken},
@@ -419,10 +440,7 @@ class LoginCubit extends Cubit<LoginState> {
         if (backendToken != null && userData != null) {
           final user = UserModel.fromJson(userData);
           final int? userId = userData['id'];
-
-          if (userId != null) {
-            await CacheHelper.saveData(key: 'userIdTwo', value: userId);
-          }
+          if (userId != null) await CacheHelper.saveData(key: 'userIdTwo', value: userId);
           await CacheHelper.saveData(key: 'userToken', value: backendToken);
           await UserDataManager.saveUserData(token: backendToken, user: user);
 
@@ -432,9 +450,7 @@ class LoginCubit extends Cubit<LoginState> {
           emit(LoginErrorState('Failed to retrieve token or user data from backend.'));
         }
       } else {
-        final errorMessage = response.data['message'] ??
-            'Failed to sign in with Apple: ${response.statusMessage}';
-        emit(LoginErrorState(errorMessage));
+        emit(LoginErrorState(response.data['message'] ?? 'Backend sign-in failed.'));
       }
     } on SignInWithAppleAuthorizationException catch (e) {
       debugPrint('Apple auth failed: code=${e.code} message=${e.message}');
@@ -444,7 +460,7 @@ class LoginCubit extends Cubit<LoginState> {
       e.response?.data is Map && e.response?.data['message'] != null
           ? e.response!.data['message']
           : (e.message ?? 'Network error');
-      debugPrint(' Dio error: $errorMessage');
+      debugPrint('Dio error: $errorMessage');
       emit(LoginErrorState(errorMessage));
     } catch (e, st) {
       debugPrint('General error: $e\n$st');
