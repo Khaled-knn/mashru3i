@@ -37,21 +37,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>We use the camera so you can upload profile photos and receipts for your orders.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We need your location even when the app is in background to show nearby creators/stores and delivery availability.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location to provide nearby creators/stores and delivery options.</string>
-	<key>NSUserNotificationUsageDescription</key>
-	<string>We need your permission to send you order updates and notifications.</string>
-
-
-	<key>NSCameraUsageDescription</key>
-	<string>We use the camera so you can upload profile photos and receipts for your orders.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We access your photos so you can select images for your profile and orders.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We use the microphone to let you record voice notes for your orders or profile.</string>
-
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We access your photos so you can select images for your profile and orders.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>We need your permission to send you order updates and notifications.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -79,5 +76,4 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
-
 </plist>
