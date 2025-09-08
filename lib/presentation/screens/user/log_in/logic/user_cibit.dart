@@ -330,23 +330,7 @@ class LoginCubit extends Cubit<LoginState> {
 
 
 
-
-
-
-
-
-
-  String _nonce(int length) {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final seed = DateTime.now().microsecondsSinceEpoch;
-    return List.generate(length, (i) => chars[(seed + i) % chars.length]).join();
-  }
-
-
-
-
-
-
+  
 
   String _secureNonce([int length = 32]) {
     final rnd = Random.secure();
